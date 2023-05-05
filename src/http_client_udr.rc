@@ -1,0 +1,34 @@
+#include "Winver.h"
+#include "udr_build_no.h"
+
+VS_VERSION_INFO VERSIONINFO
+FILEFLAGSMASK   VS_FF_DEBUG | VS_FF_PRERELEASE
+FILEFLAGS       VS_FF_PRERELEASE | VS_FF_SPECIALBUILD
+FILEVERSION     FILE_VER_NUMBER
+PRODUCTVERSION  FILE_VER_NUMBER
+FILEOS          VOS_NT_WINDOWS32
+
+FILETYPE        VFT_DLL
+FILESUBTYPE     VS_USER_DEFINED
+
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "000004b0"
+    BEGIN
+      VALUE "CompanyName", "IBSurgeon\0"
+      VALUE "FileDescription", "IBSurgeon HTTP Client UDR\0"
+      VALUE "FileVersion", FILE_VER_STRING
+      VALUE "InternalName", "http_client_udr.dll\0"
+	  VALUE "OriginalFilename", "http_client_udr.dll\0"
+      VALUE "LegalCopyright", "Copyright (c) 2001-2023 IBSurgeon\0"
+      VALUE "ProductName", "HTTP-CLIENT-UDR\0"
+      VALUE "ProductVersion", PRODUCT_VER_STRING
+    END
+  END
+
+  BLOCK "VarFileInfo"
+  BEGIN                               /*  Language   |    Translation       */
+    VALUE "Translation", 0x0, 1200  /* Neutral, Unicode */
+  END
+END
