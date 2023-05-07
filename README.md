@@ -14,8 +14,37 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 * [HttpClientUdr_Win_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_Win_x64.zip)
 * [HttpClientUdr_Win_x86.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_Win_x86.zip)
 
+Скачать готовые сборки под ОС Linux можно по ссылкам:
+* [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_CentOS7_x64.zip)
+
 
 Вся процедуры и функции для работы с библиотекой HTTP Client инкапсулированы в PSQL пакете `HTTP_UTILS`.
+
+## Сборка под Linux
+
+Перед сборкой необходимо установить
+
+В ubuntu
+```
+sudo apt-get install libcurl4-openssl-dev
+```
+
+В CentOS
+```
+sudo yum install libcurl-devel
+```
+
+Теперь можно производить саму сборку.
+
+```
+$ git clone https://github.com/IBSurgeon/http_client_udr.git
+$ cd http_client_udr
+$ mkdir build; cd build
+$ cmake ..
+$ make
+$ sudo make install
+```
+
 
 ## Пакет `HTTP_UTILS`
 
