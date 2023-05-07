@@ -12,19 +12,17 @@
 # ----------------------------------------------------------------------------
 
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.6)
 
 project(http_client_udr
-    VERSION 1.0.0
-    DESCRIPTION "IBSurgeon HTTP Client UDR")
+    LANGUAGES CXX
+    VERSION 1.0.0)
 
 ###############################################################################
 # CMake standard options
 ############
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
-
-add_library(http_client_udr SHARED) 
 
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 
@@ -33,9 +31,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 ###############################################################################
-# Require and enable C++ 0x/11/14/17
+# Require and enable C++ 0x/11/14
 ############
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "${PROJECT_NAME} compile: C++${CMAKE_CXX_STANDARD}")
@@ -54,7 +52,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_GNUCXX)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     string(REGEX REPLACE "[/-]W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     if (NOT (CMAKE_VERSION VERSION_LESS 3.6.0)) # Compiler features for Intel in CMake 3.6+
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qstd=c++17")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qstd=c++14")
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /QaxCORE-AVX2")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:precise")
@@ -78,8 +76,7 @@ endif()
 # src
 ####################################
 file(GLOB_RECURSE sources "src/*")
-target_sources(${PROJECT_NAME} PRIVATE ${sources})
-
+add_library(http_client_udr SHARED ${sources}) 
 
 set(FIREBIRD_DIR /opt/firebird)
 set(FIREBIRD_INCLUDE_DIR ${FIREBIRD_DIR}/include)

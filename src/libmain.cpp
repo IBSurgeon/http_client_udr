@@ -125,12 +125,16 @@ std::string extractResponseStatusText(long http_version, long statusCode, const 
     case CURL_HTTP_VERSION_1_1:
         preStatusText = "HTTP/1.1";
         break;
+#ifdef CURL_HTTP_VERSION_2_0
     case CURL_HTTP_VERSION_2_0:
         preStatusText = "HTTP/2";
         break;
+#endif		
+#ifdef CURL_HTTP_VERSION_3
     case CURL_HTTP_VERSION_3:
         preStatusText = "HTTP/3";
         break;
+#endif			
     }
     preStatusText += " " + std::to_string(statusCode) + " ";
 
@@ -282,7 +286,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
             }
         }
         // auto-delete headers
-        AutoCurlHeadersFree autoHeaders(headers);
+        AutoCurlHeadersFree<curl_slist> autoHeaders(headers);
         // set headers
         if (headers) {
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -356,7 +360,11 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
                 throwException(status, curlErrorBuffer);
             }
 
+#ifdef CURLINFO_HTTP_VERSION
             curl_easy_getinfo(curl, CURLINFO_HTTP_VERSION, &m_http_version);
+#else
+	        m_http_version = CURL_HTTP_VERSION_1_1;
+#endif
 
             m_needFetch = true;
         }
