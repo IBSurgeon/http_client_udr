@@ -1,9 +1,24 @@
-﻿#include "UDR.h"
+﻿/**
+ *  Implementation of Http Client procedures and functions.
+ *
+ *  The original code was created by Simonov Denis
+ *  for the open source project "IBSurgeon Http Client UDR".
+ *
+ *  Copyright (c) 2023 Simonov Denis <sim-mail@list.ru>
+ *  and all contributors signed below.
+ *
+ *  All Rights Reserved.
+ *  Contributor(s): ______________________________________.
+**/
+
+
+#include "UDR.h"
 #include <curl/curl.h>
 #include <string>
 #include <memory>
 #include <vector>
 #include <sstream>
+#include <cstdarg>
 
 constexpr unsigned int BUFFER_LARGE = 16384;
 constexpr unsigned int MAX_SEGMENT_SIZE = 65535;
@@ -213,15 +228,17 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
             throwException(status, "Cannot CURL init");
         }
 
-        // буфер для сохранения текстовых ошибок
+        // buffer for storing text errors
         char curlErrorBuffer[CURL_ERROR_SIZE];
-
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curlErrorBuffer);
-        // устанавливаем URL
+
+        // set url
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
-        // устанавливаем метод
+        // set Http method
         switch (httpMethod) {
+        case HttpMethod::Get:
+            break;
         case HttpMethod::Head:
             curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
             break;
@@ -237,17 +254,19 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         case HttpMethod::Delete:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
             break;
+        default:
+            throwException(status, "Http method %s in not supported", sHttpMethod.c_str());
         }
 
-        // собираем заголовки
+        // collecting headers
         struct curl_slist* headers = nullptr;
-        // сначала content-type
+        // content-type
         if (!in->contentTypeNull) {
             std::string contentType(in->contentType.str, in->contentType.length);
             contentType = std::string("Content-Type: ") + contentType;
             headers = curl_slist_append(headers, contentType.c_str());
         }
-        // теперь все остальные
+        // other headers
         if (!in->headersNull) {
             std::string sHeaders(in->headers.str, in->headers.length);
             std::size_t prev = 0, pos;
@@ -262,9 +281,9 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
                 prev = pos + 1;
             }
         }
-        // автоудаление заголовков
+        // auto-delete headers
         AutoCurlHeadersFree autoHeaders(headers);
-        // устанавливаем заголовки, если есть
+        // set headers
         if (headers) {
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         }
@@ -290,7 +309,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
                     break;
                 }
             }
-            // ставим на начало
+            // set beginning of stream
             requestBody.seekg(0, std::ios::beg);
             
             curl_easy_setopt(curl, CURLOPT_READDATA, &requestBody);
@@ -298,23 +317,23 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         }
 
 
-        // переходить по "Location:" указанному в HTTP заголовке  
+        // go to the "Location:" specified in the HTTP header
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
         curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
-        // не проверять сертификат удаленного сервера
+        // do not check the remote server certificate
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-        // не проверять Host SSL сертификата
+        // do not check Host SSL certificate
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 
-        // функция, вызываемая cURL для записи полученных заголовков   
+        // function called by cURL to record received headers 
         curl_easy_setopt(curl, CURLOPT_HEADERDATA, &m_responseHeaders);
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, write_data);
-        // функция, вызываемая cURL для записи полученных данных   
+        // function called by cURL to record the received data 
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &m_response);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 
 
-        // выполнить запрос
+        // execute a request
         CURLcode curlResult = curl_easy_perform(curl);
 
         if (curlResult == CURLE_OK) {
@@ -374,7 +393,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
                 statusText.copy(out->statusText.str, out->statusText.length);
             }
 
-            const UCHAR bpb[] = {
+            const unsigned char bpb[] = {
                 isc_bpb_version1,
                 isc_bpb_type, 1, isc_bpb_type_stream,
                 isc_bpb_storage, 1, isc_bpb_storage_temp
@@ -406,7 +425,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         const std::string response = m_response.str();
         out->bodyNull = response.empty();
         if (!out->bodyNull) {
-            const UCHAR bpb[] = {
+            const unsigned char bpb[] = {
                 isc_bpb_version1,
                 isc_bpb_type, 1, isc_bpb_type_stream,
                 isc_bpb_storage, 1, isc_bpb_storage_temp

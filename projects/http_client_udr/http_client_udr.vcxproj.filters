@@ -21,6 +21,10 @@
       <UniqueIdentifier>{5a64c4ff-e444-4346-b568-4ec19f20f43e}</UniqueIdentifier>
       <Extensions>md</Extensions>
     </Filter>
+    <Filter Include="CMAKE">
+      <UniqueIdentifier>{6e1d125a-35b9-42d5-bea1-72e74e0940ef}</UniqueIdentifier>
+      <Extensions>txt</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\FBAutoPtr.h">
@@ -53,5 +57,10 @@
     <ResourceCompile Include="..\..\src\http_client_udr.rc">
       <Filter>Файлы ресурсов</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\CMakeLists.txt">
+      <Filter>CMAKE</Filter>
+    </Text>
   </ItemGroup>
 </Project>
