@@ -17,11 +17,33 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
+#include <algorithm>
 #include <sstream>
 #include <cstdarg>
 
 constexpr unsigned int BUFFER_LARGE = 16384;
 constexpr unsigned int MAX_SEGMENT_SIZE = 65535;
+
+// trim from start (in place)
+static inline void ltrim(std::string& s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string& s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
+// trim from both ends (in place)
+static inline void trim(std::string& s) {
+    rtrim(s);
+    ltrim(s);
+}
 
 template <typename T>
 class AutoCurlCleanupClear
@@ -62,6 +84,7 @@ public:
     {
     }
 };
+
 
 enum class HttpMethod {
     Get,
@@ -142,11 +165,15 @@ std::string extractResponseStatusText(long http_version, long statusCode, const 
     if (start == std::string::npos) return "";
     
     auto end = headers.find("\r\n", start + preStatusText.size());
+    if (end == std::string::npos) {
+        end = headers.find("\n", start + preStatusText.size());
+    }
     if (end == std::string::npos) return "";
     
     auto offset = start + preStatusText.size();
     return headers.substr(offset, end - offset);
 }
+
 
 size_t read_callback(char* ptr, size_t size, size_t nmemb, void* userdata)
 {
@@ -169,13 +196,96 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, void* stream)
     return size * nmemb;
 }
 
+void setCurlOptions(CURL* curl, const std::string& options)
+{
+    size_t offset = 0;
+    while (offset < options.size()) {
+        size_t lPos = options.find("\r\n", offset);
+        if (lPos == std::string::npos) {
+            lPos = options.find("\n", offset);
+        }
+        std::string line = options.substr(offset, lPos - offset);
+        trim(line);
+        if (!line.empty()) {
+            size_t eqPos = line.find("=");
+            if (eqPos == std::string::npos)
+                throw std::runtime_error("Invalid options string");
+            std::string key = line.substr(0, eqPos);
+            trim(key);
+            std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+            std::string value = line.substr(eqPos + 1);
+            trim(value);
+
+            if (key == "CURLOPT_DNS_SERVERS") {
+                curl_easy_setopt(curl, CURLOPT_DNS_SERVERS, value.c_str());
+            } else if (key == "CURLOPT_PROXY") {
+                curl_easy_setopt(curl, CURLOPT_PROXY, value.c_str());
+            } else if (key == "CURLOPT_PRE_PROXY") {
+                curl_easy_setopt(curl, CURLOPT_PRE_PROXY, value.c_str());
+            } else if (key == "CURLOPT_PROXYPORT") {
+                curl_easy_setopt(curl, CURLOPT_PROXYPORT, std::stol(value));
+            } else if (key == "CURLOPT_PROXYUSERPWD") {
+                curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, value.c_str());
+            } else if (key == "CURLOPT_PROXYUSERNAME") {
+                curl_easy_setopt(curl, CURLOPT_PROXYUSERNAME, value.c_str());
+            } else if (key == "CURLOPT_PROXYPASSWORD") {
+                curl_easy_setopt(curl, CURLOPT_PROXYPASSWORD, value.c_str());
+            } else if (key == "CURLOPT_PROXY_TLSAUTH_USERNAME") {
+                curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_USERNAME, value.c_str());
+            } else if (key == "CURLOPT_PROXY_TLSAUTH_USERNAME") {
+                curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_PASSWORD, value.c_str());
+            } else if (key == "CURLOPT_PROXY_TLSAUTH_TYPE") {
+                curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_PASSWORD, value.c_str());
+            } else if (key == "CURLOPT_TLSAUTH_USERNAME") {
+                curl_easy_setopt(curl, CURLOPT_TLSAUTH_USERNAME, value.c_str());
+            } else if (key == "CURLOPT_TLSAUTH_PASSWORD") {
+                curl_easy_setopt(curl, CURLOPT_TLSAUTH_PASSWORD, value.c_str());
+            } else if (key == "CURLOPT_TLSAUTH_TYPE") {
+                curl_easy_setopt(curl, CURLOPT_TLSAUTH_TYPE, value.c_str());
+            } else if (key == "CURLOPT_SSL_VERIFYHOST") {
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, std::stol(value));
+            } else if (key == "CURLOPT_SSL_VERIFYPEER") {
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, std::stol(value));
+            } else if (key == "CURLOPT_SSLCERT") {
+                curl_easy_setopt(curl, CURLOPT_SSLCERT, value.c_str());
+            } else if (key == "CURLOPT_SSLKEY") {
+                curl_easy_setopt(curl, CURLOPT_SSLCERT, value.c_str());
+            } else if (key == "CURLOPT_SSLCERTTYPE") {
+                curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, value.c_str());
+            } else if (key == "CURLOPT_CAINFO") {
+                curl_easy_setopt(curl, CURLOPT_CAINFO, value.c_str());
+            } else if (key == "CURLOPT_TIMEOUT") {
+                curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::stol(value));
+            } else if (key == "CURLOPT_TIMEOUT_MS") {
+                curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, std::stol(value));
+            } else if (key == "CURLOPT_TCP_KEEPALIVE") {
+                curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, std::stol(value));
+            } else if (key == "CURLOPT_TCP_KEEPIDLE") {
+                curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, std::stol(value));
+            } else if (key == "CURLOPT_CONNECTTIMEOUT") {
+                curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, std::stol(value));
+            } else if (key == "CURLOPT_USERAGENT") {
+                curl_easy_setopt(curl, CURLOPT_USERAGENT, value.c_str());
+            } else {
+                throw std::runtime_error(std::string("Unsupported CURL option ") + key);
+            }
+
+        }
+        if (lPos == std::string::npos)
+            offset = options.size();
+        else
+            offset = lPos + 1;
+    }
+}
+
 /*
   PROCEDURE SEND_REQUEST (
     METHOD               VARCHAR(6) NOT NULL,
     URL                  VARCHAR(1024) NOT NULL,
     REQUEST_BODY         BLOB SUB_TYPE TEXT,
     REQUEST_TYPE         VARCHAR(256),
-    HEADERS              VARCHAR(8191)
+    HEADERS              VARCHAR(8191),
+    OPTIONS              VARCHAR(8191)
   )
   RETURNS (
     STATUS_CODE          SMALLINT,
@@ -196,6 +306,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         (FB_BLOB, body)
         (FB_INTL_VARCHAR(1024, 0), contentType)
         (FB_INTL_VARCHAR(32765, 0), headers)
+        (FB_INTL_VARCHAR(32765, 0), options)
     );
 
     FB_UDR_MESSAGE(OutMessage,
@@ -261,6 +372,22 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         default:
             throwException(status, "Http method %s in not supported", sHttpMethod.c_str());
         }
+        
+        if (!in->optionsNull) {
+            std::string curlOptions(in->options.str, in->options.length);
+            try {
+                setCurlOptions(curl, curlOptions);
+            }
+            catch (const std::runtime_error &e) {
+                throwException(status, e.what());
+            }
+            catch (const std::invalid_argument& e) {
+                throwException(status, e.what());
+            }
+            catch (const std::out_of_range& e) {
+                throwException(status, e.what());
+            }
+        }
 
         // collecting headers
         struct curl_slist* headers = nullptr;
@@ -305,7 +432,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
                 case Firebird::IStatus::RESULT_OK:
                 case Firebird::IStatus::RESULT_SEGMENT:
                     requestBody.write(buffer, l);
-                    continue;
+                    break;
                 default:
                     bodyBlob->close(status);
                     bodyBlob.release();
@@ -324,10 +451,6 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         // go to the "Location:" specified in the HTTP header
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
         curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
-        // do not check the remote server certificate
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-        // do not check Host SSL certificate
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 
         // function called by cURL to record received headers 
         curl_easy_setopt(curl, CURLOPT_HEADERDATA, &m_responseHeaders);
