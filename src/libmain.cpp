@@ -670,7 +670,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         CURLcode curlResult = curl_easy_perform(curl);
 
         if (curlResult == CURLE_OK) {
-            out->statusCodeNull = false;
+            out->statusCodeNull = FB_FALSE;
             if (curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &out->statusCode) != CURLE_OK) {
                 throwException(status, curlErrorBuffer);
             }
@@ -678,11 +678,11 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
             char* contentType = nullptr;
             if (curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &contentType) == CURLE_OK) {
                 if (contentType) {
-                    out->contentTypeNull = false;
+                    out->contentTypeNull = FB_FALSE;
                     m_resonseContentType.assign(contentType);
                 }
                 else {
-                    out->contentTypeNull = true;
+                    out->contentTypeNull = FB_TRUE;
                 }
             }
             else {
@@ -724,7 +724,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         m_needFetch = !m_needFetch;
         // response headers
         const std::string headers = m_responseHeaders.str();
-        out->headersNull = headers.empty();
+        out->headersNull = headers.empty() ? FB_TRUE : FB_FALSE;
         if (!out->headersNull) {
             auto statusText = extractResponseStatusText(m_http_version, out->statusCode, headers);
             out->statusTextNull = statusText.empty();
@@ -763,7 +763,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
 
         // response body
         const std::string response = m_response.str();
-        out->bodyNull = response.empty();
+        out->bodyNull = response.empty() ? FB_TRUE : FB_FALSE;
         if (!out->bodyNull) {
             const unsigned char bpb[] = {
                 isc_bpb_version1,
@@ -826,10 +826,10 @@ FB_UDR_BEGIN_FUNCTION(urlEncode)
     FB_UDR_EXECUTE_FUNCTION
     {
         if (in->strNull) {
-            out->strNull = true;
+            out->strNull = FB_TRUE;
             return;
         }
-        out->strNull = false;
+        out->strNull = FB_FALSE;
         
 
         AutoCurlCleanup<CURL> curl(curl_easy_init());
@@ -873,10 +873,10 @@ FB_UDR_BEGIN_FUNCTION(urlDecode)
     FB_UDR_EXECUTE_FUNCTION
     {
         if (in->strNull) {
-            out->strNull = true;
+            out->strNull = FB_TRUE;
             return;
         }
-        out->strNull = false;
+        out->strNull = FB_FALSE;
 
 
         AutoCurlCleanup<CURL> curl(curl_easy_init());
@@ -904,10 +904,10 @@ FB_UDR_END_FUNCTION
     URL                  VARCHAR(8191)
   )
   RETURNS (
-    URL_HOST             VARCHAR(256),
     URL_SCHEME           VARCHAR(64),
     URL_USER             VARCHAR(64),
     URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256),
     URL_PORT             INTEGER,
     URL_PATH             VARCHAR(8191),
     URL_QUERY            VARCHAR(8191),
@@ -924,10 +924,10 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
     );
 
     FB_UDR_MESSAGE(OutMessage,
-        (FB_INTL_VARCHAR(1024, 0), host)
         (FB_INTL_VARCHAR(256, 0), scheme)
         (FB_INTL_VARCHAR(256, 0), user)
         (FB_INTL_VARCHAR(256, 0), password)
+        (FB_INTL_VARCHAR(1024, 0), host)
         (FB_INTEGER, port)
         (FB_INTL_VARCHAR(32765, 0), path)
         (FB_INTL_VARCHAR(32765, 0), query)
@@ -942,33 +942,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
 
             AutoCurlUrlCleanup<CURLU> url(curl_url());
             auto rc = curl_url_set(url, CURLUPART_URL, sUrl.c_str(), 0);
-            if (rc != CURLE_OK) {
-                std::string errorMessage(curl_url_strerror(rc));
-                throwException(status, errorMessage.c_str());
-            }
-            // host
-            char* host = nullptr;
-            rc = curl_url_get(url, CURLUPART_HOST, &host, 0);
-            if (!rc) {
-                out->hostNull = false;
-                if (host) {
-                    const std::string sHost(host);
-                    curl_free(host);
-
-                    if (sHost.size() > 1024) {
-                        throwException(status, "The HOST part of the URL is too long.");
-                    }
-                    out->host.length = std::min<short>(sHost.size(), 1024);
-                    sHost.copy(out->host.str, out->host.length);
-                }
-                else {
-                    out->hostNull = true;
-                }
-            }
-            else if (rc == CURLUE_NO_HOST) {
-                out->hostNull = true;
-            }
-            else {
+            if (rc != CURLUE_OK) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
             }
@@ -976,8 +950,8 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* scheme = nullptr;
             rc = curl_url_get(url, CURLUPART_SCHEME, &scheme, 0);
             if (!rc) {
-                out->schemeNull = false;
-                if (host) {
+                out->schemeNull = FB_FALSE;
+                if (scheme) {
                     const std::string sScheme(scheme);
                     curl_free(scheme);
 
@@ -988,11 +962,11 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     sScheme.copy(out->scheme.str, out->scheme.length);
                 }
                 else {
-                    out->schemeNull = true;
+                    out->schemeNull = FB_TRUE;
                 }
             }
             else if (rc == CURLUE_NO_SCHEME) {
-                out->schemeNull = true;
+                out->schemeNull = FB_TRUE;
             }
             else {
                 std::string errorMessage(curl_url_strerror(rc));
@@ -1002,7 +976,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* user = nullptr;
             rc = curl_url_get(url, CURLUPART_USER, &user, 0);
             if (!rc) {
-                out->userNull = false;
+                out->userNull = FB_FALSE;
                 if (user) {
                     const std::string sUser(user);
                     curl_free(user);
@@ -1014,11 +988,11 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     sUser.copy(out->user.str, out->user.length);
                 }
                 else {
-                    out->userNull = true;
+                    out->userNull = FB_TRUE;
                 }
             }
             else if (rc == CURLUE_NO_USER) {
-                out->userNull = true;
+                out->userNull = FB_TRUE;
             }
             else {
                 std::string errorMessage(curl_url_strerror(rc));
@@ -1028,7 +1002,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* password = nullptr;
             rc = curl_url_get(url, CURLUPART_PASSWORD, &password, 0);
             if (!rc) {
-                out->passwordNull = false;
+                out->passwordNull = FB_FALSE;
                 if (password) {
                     const std::string sPassword(password);
                     curl_free(password);
@@ -1040,11 +1014,37 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     sPassword.copy(out->password.str, out->password.length);
                 }
                 else {
-                    out->passwordNull = true;
+                    out->passwordNull = FB_TRUE;
                 }
             }
             else if (rc == CURLUE_NO_PASSWORD) {
-                out->passwordNull = true;
+                out->passwordNull = FB_TRUE;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // host
+            char* host = nullptr;
+            rc = curl_url_get(url, CURLUPART_HOST, &host, 0);
+            if (!rc) {
+                out->hostNull = FB_FALSE;
+                if (host) {
+                    const std::string sHost(host);
+                    curl_free(host);
+
+                    if (sHost.size() > 1024) {
+                        throwException(status, "The HOST part of the URL is too long.");
+                    }
+                    out->host.length = std::min<short>(sHost.size(), 1024);
+                    sHost.copy(out->host.str, out->host.length);
+                }
+                else {
+                    out->hostNull = FB_TRUE;
+                }
+            }
+            else if (rc == CURLUE_NO_HOST) {
+                out->hostNull = FB_TRUE;
             }
             else {
                 std::string errorMessage(curl_url_strerror(rc));
@@ -1054,7 +1054,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* port = nullptr;
             rc = curl_url_get(url, CURLUPART_PORT, &port, 0);
             if (!rc) {
-                out->portNull = false;
+                out->portNull = FB_FALSE;
                 if (port) {
                     const std::string sPort(port);
                     curl_free(port);
@@ -1073,11 +1073,11 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     }
                 }
                 else {
-                    out->portNull = true;
+                    out->portNull = FB_TRUE;
                 }
             }
             else if (rc == CURLUE_NO_PORT) {
-                out->portNull = true;
+                out->portNull = FB_TRUE;
             }
             else {
                 std::string errorMessage(curl_url_strerror(rc));
@@ -1087,7 +1087,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* path = nullptr;
             rc = curl_url_get(url, CURLUPART_PATH, &path, 0);
             if (!rc) {
-                out->pathNull = false;
+                out->pathNull = FB_FALSE;
                 if (path) {
                     const std::string sPath(path);
                     curl_free(path);
@@ -1099,7 +1099,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     sPath.copy(out->path.str, out->path.length);
                 }
                 else {
-                    out->pathNull = true;
+                    out->pathNull = FB_TRUE;
                 }
             }
             else {
@@ -1110,7 +1110,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* query = nullptr;
             rc = curl_url_get(url, CURLUPART_QUERY, &query, 0);
             if (!rc) {
-                out->queryNull = false;
+                out->queryNull = FB_FALSE;
                 if (query) {
                     const std::string sQuery(query);
                     curl_free(query);
@@ -1122,11 +1122,11 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     sQuery.copy(out->query.str, out->query.length);
                 }
                 else {
-                    out->queryNull = true;
+                    out->queryNull = FB_TRUE;
                 }
             }
             else if (rc == CURLUE_NO_QUERY) {
-                out->queryNull = true;
+                out->queryNull = FB_TRUE;
             }
             else {
                 std::string errorMessage(curl_url_strerror(rc));
@@ -1136,7 +1136,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             char* fragment = nullptr;
             rc = curl_url_get(url, CURLUPART_FRAGMENT, &fragment, 0);
             if (!rc) {
-                out->fragmentNull = false;
+                out->fragmentNull = FB_FALSE;
                 if (fragment) {
                     const std::string sFragment(fragment);
                     curl_free(fragment);
@@ -1148,11 +1148,11 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     sFragment.copy(out->fragment.str, out->fragment.length);
                 }
                 else {
-                    out->fragmentNull = true;
+                    out->fragmentNull = FB_TRUE;
                 }
             }
             else if (rc == CURLUE_NO_FRAGMENT) {
-                out->fragmentNull = true;
+                out->fragmentNull = FB_TRUE;
             }
             else {
                 std::string errorMessage(curl_url_strerror(rc));
@@ -1173,6 +1173,137 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
 
 FB_UDR_END_PROCEDURE
 
+/*
+  FUNCTION BUILD_URL (
+    URL_SCHEME           VARCHAR(64) NOT NULL,
+    URL_USER             VARCHAR(64),
+    URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256) NOT NULL,
+    URL_PORT             INTEGER,
+    URL_PATH             VARCHAR(8191),
+    URL_QUERY            VARCHAR(8191),
+    URL_FRAGMENT         VARCHAR(8191)
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!buildUrl'
+  ENGINE UDR;
+*/
 
+FB_UDR_BEGIN_FUNCTION(buildUrl)
+
+    FB_UDR_MESSAGE(InMessage,
+        (FB_INTL_VARCHAR(256, 0), scheme)
+        (FB_INTL_VARCHAR(256, 0), user)
+        (FB_INTL_VARCHAR(256, 0), password)
+        (FB_INTL_VARCHAR(1024, 0), host)
+        (FB_INTEGER, port)
+        (FB_INTL_VARCHAR(32765, 0), path)
+        (FB_INTL_VARCHAR(32765, 0), query)
+        (FB_INTL_VARCHAR(32765, 0), fragment)
+    );
+
+    FB_UDR_MESSAGE(OutMessage,
+        (FB_INTL_VARCHAR(32765, 0), url)
+    );
+
+    FB_UDR_EXECUTE_FUNCTION
+    {
+        AutoCurlUrlCleanup<CURLU> url(curl_url());
+        CURLUcode rc = CURLUE_OK;
+        // scheme
+        if (!in->schemeNull) {
+            std::string scheme(in->scheme.str, in->scheme.length);
+            rc = curl_url_set(url, CURLUPART_SCHEME, scheme.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // user
+        if (!in->userNull) {
+            std::string user(in->user.str, in->user.length);
+            rc = curl_url_set(url, CURLUPART_USER, user.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // password
+        if (!in->passwordNull) {
+            std::string password(in->password.str, in->password.length);
+            rc = curl_url_set(url, CURLUPART_PASSWORD, password.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // host
+        if (!in->hostNull) {
+            std::string host(in->host.str, in->host.length);
+            rc = curl_url_set(url, CURLUPART_HOST, host.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // port
+        if (!in->portNull) {
+            std::string port = std::to_string(in->port);
+            rc = curl_url_set(url, CURLUPART_PORT, port.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // path
+        if (!in->pathNull) {
+            std::string path(in->path.str, in->path.length);
+            rc = curl_url_set(url, CURLUPART_PATH, path.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // query
+        if (!in->queryNull) {
+            std::string query(in->query.str, in->query.length);
+            rc = curl_url_set(url, CURLUPART_QUERY, query.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // fragment
+        if (!in->fragmentNull) {
+            std::string fragment(in->fragment.str, in->fragment.length);
+            rc = curl_url_set(url, CURLUPART_FRAGMENT, fragment.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // build URL
+        out->urlNull = FB_TRUE;
+        char* cUrl = nullptr;
+        rc = curl_url_get(url, CURLUPART_URL, &cUrl, 0);
+        if (rc == CURLUE_OK) {
+            std::string sUrl(cUrl);
+            curl_free(cUrl);
+
+            out->urlNull = FB_FALSE;
+
+            if (sUrl.size() > 32765) {
+                throwException(status, "The URL is too long.");
+            }
+            out->url.length = std::min<short>(sUrl.size(), 32765);
+            sUrl.copy(out->url.str, out->url.length);
+        } 
+        else {
+            std::string errorMessage(curl_url_strerror(rc));
+            throwException(status, errorMessage.c_str());
+        }
+    }
+
+FB_UDR_END_FUNCTION
 
 FB_UDR_IMPLEMENT_ENTRY_POINT

@@ -40,13 +40,29 @@ Authorization: Token b81a595753ff53056468a939c034c96b49177db3
   }'
 );
 
-SELECT
-    URL_HOST,
+SELECT   
     URL_SCHEME,
     URL_USER,
     URL_PASSWORD,
+    URL_HOST,
     URL_PORT,
     URL_PATH,
     URL_QUERY,
     URL_FRAGMENT
 FROM HTTP_UTILS.PARSE_URL('https://user:password@server:8080/part/put?a=1&b=2#fragment');
+
+
+SELECT
+  HTTP_UTILS.BUILD_URL(
+    'https',
+    NULL,
+    NULL, 
+    'localhost',
+    8080,
+    '/',
+    'query=database',
+    'DB'
+  ) AS URL
+FROM RDB$DATABASE;
+
+

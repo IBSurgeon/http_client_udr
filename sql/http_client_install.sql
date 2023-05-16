@@ -325,10 +325,10 @@ BEGIN
    *
    * Output parameters:
    *
-   * - `URL_HOST` - hostname part of the URL.
    * - `URL_SCHEME` - scheme specifies the protocol to use.
    * - `URL_USER` - user part of the URL.
-   * - `URL_PASSWORD` - user password of the URL.
+   * - `URL_PASSWORD` - password part of the URL.
+   * - `URL_HOST` - hostname part of the URL.
    * - `URL_PORT` - port number (1-65535) specified in the URL, if the port is not present then returns NULL.
    * - `URL_PATH` - path part of the URL. The part will be '/' even if no path is supplied in the URL. A URL path always starts with a slash.
    * - `URL_QUERY` - query part of the URL.
@@ -338,15 +338,41 @@ BEGIN
     URL                  VARCHAR(8191)
   )
   RETURNS (
-    URL_HOST             VARCHAR(256),
     URL_SCHEME           VARCHAR(64),
     URL_USER             VARCHAR(64),
     URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256),
     URL_PORT             INTEGER,
     URL_PATH             VARCHAR(8191),
     URL_QUERY            VARCHAR(8191),
     URL_FRAGMENT         VARCHAR(8191)
   );
+
+  /**
+   * Building a URL from parts.
+   *
+   * Input parameters:
+   *
+   * - `URL_SCHEME` - scheme specifies the protocol to use.
+   * - `URL_USER` - user part of the URL.
+   * - `URL_PASSWORD` - password part of the URL.
+   * - `URL_HOST` - hostname part of the URL.
+   * - `URL_PORT` - port number (1-65535) specified in the URL or NULL.
+   * - `URL_PATH` - path part of the URL. The part will be '/' even if no path is supplied in the URL. A URL path always starts with a slash.
+   * - `URL_QUERY` - query part of the URL.
+   * - `URL_FRAGMENT` - fragment part of the URL.
+   */
+  FUNCTION BUILD_URL (
+    URL_SCHEME           VARCHAR(64) NOT NULL,
+    URL_USER             VARCHAR(64),
+    URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256) NOT NULL,
+    URL_PORT             INTEGER DEFAULT NULL,
+    URL_PATH             VARCHAR(8191) DEFAULT NULL,
+    URL_QUERY            VARCHAR(8191) DEFAULT NULL,
+    URL_FRAGMENT         VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS VARCHAR(8191);
 END^
 
 RECREATE PACKAGE BODY HTTP_UTILS
@@ -705,16 +731,30 @@ BEGIN
     URL                  VARCHAR(8191)
   )
   RETURNS (
-    URL_HOST             VARCHAR(256),
     URL_SCHEME           VARCHAR(64),
     URL_USER             VARCHAR(64),
     URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256),
     URL_PORT             INTEGER,
     URL_PATH             VARCHAR(8191),
     URL_QUERY            VARCHAR(8191),
     URL_FRAGMENT         VARCHAR(8191)
   )
   EXTERNAL NAME 'http_client_udr!parseUrl'
+  ENGINE UDR;
+
+  FUNCTION BUILD_URL (
+    URL_SCHEME           VARCHAR(64) NOT NULL,
+    URL_USER             VARCHAR(64),
+    URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256) NOT NULL,
+    URL_PORT             INTEGER,
+    URL_PATH             VARCHAR(8191),
+    URL_QUERY            VARCHAR(8191),
+    URL_FRAGMENT         VARCHAR(8191)
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!buildUrl'
   ENGINE UDR;
 END^
 
