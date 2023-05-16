@@ -31,9 +31,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 ###############################################################################
-# Require and enable C++ 0x/11/14
+# Require and enable C++ 0x/11/14/17
 ############
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "${PROJECT_NAME} compile: C++${CMAKE_CXX_STANDARD}")
