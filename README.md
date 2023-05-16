@@ -48,6 +48,340 @@ $ sudo make install
 
 ## Пакет `HTTP_UTILS`
 
+### Процедура `HTTP_UTILS.HTTP_REQUEST`
+
+Процедура `HTTP_UTILS.HTTP_REQUEST` предназначена для отправки HTTP запроса и получения HTTP ответа. 
+Это основная процедура с помощью которой происходит общение с web-сервисами.
+
+```sql
+  PROCEDURE HTTP_REQUEST (
+    METHOD               D_HTTP_METHOD NOT NULL,
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB DEFAULT NULL,
+    REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
+- `URL` - URL адрес. Обязательный параметр.
+- `REQUEST_BODY` - тело HTTP запроса.
+- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_GET`
+
+Процедура `HTTP_UTILS.HTTP_GET` предназначена для отправки HTTP запроса методом GET. 
+
+```sql
+  PROCEDURE HTTP_GET (
+    URL                  VARCHAR(8191) NOT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_HEAD`
+
+Процедура `HTTP_UTILS.HTTP_HEAD` предназначена для отправки HTTP запроса методом HEAD. 
+
+
+```sql
+  PROCEDURE HTTP_HEAD (
+    URL                  VARCHAR(8191) NOT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_POST`
+
+Процедура `HTTP_UTILS.HTTP_POST` предназначена для отправки HTTP запроса методом POST. 
+
+
+```sql
+  PROCEDURE HTTP_POST (
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB DEFAULT NULL,
+    REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `REQUEST_BODY` - тело HTTP запроса.
+- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_PUT`
+
+Процедура `HTTP_UTILS.HTTP_PUT` предназначена для отправки HTTP запроса методом PUT. 
+
+
+```sql
+  PROCEDURE HTTP_PUT (
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB DEFAULT NULL,
+    REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `REQUEST_BODY` - тело HTTP запроса.
+- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_PATCH`
+
+Процедура `HTTP_UTILS.HTTP_PATCH` предназначена для отправки HTTP запроса методом PATCH. 
+
+
+```sql
+  PROCEDURE HTTP_PATCH (
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB DEFAULT NULL,
+    REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `REQUEST_BODY` - тело HTTP запроса.
+- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_DELETE`
+
+Процедура `HTTP_UTILS.HTTP_DELETE` предназначена для отправки HTTP запроса методом DELETE. 
+
+
+```sql
+  PROCEDURE HTTP_DELETE (
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB DEFAULT NULL,
+    REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `REQUEST_BODY` - тело HTTP запроса.
+- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_OPTIONS`
+
+Процедура `HTTP_UTILS.HTTP_OPTIONS` предназначена для отправки HTTP запроса методом OPTIONS. 
+
+
+```sql
+  PROCEDURE HTTP_OPTIONS (
+    URL                  VARCHAR(8191) NOT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
+### Процедура `HTTP_UTILS.HTTP_TRACE`
+
+Процедура `HTTP_UTILS.HTTP_TRACE` предназначена для отправки HTTP запроса методом TRACE. 
+
+
+```sql
+  PROCEDURE HTTP_TRACE (
+    URL                  VARCHAR(8191) NOT NULL,
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS (
+    STATUS_CODE          SMALLINT,
+    STATUS_TEXT          VARCHAR(256),
+    RESPONSE_TYPE        VARCHAR(256),
+    RESPONSE_BODY        BLOB,
+    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+  );
+```
+
+Входные параметры:
+
+- `URL` - URL адрес. Обязательный параметр.
+- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
+
+Выходные параметры:
+
+- `STATUS_CODE` - код статуса ответа.
+- `STATUS_TEXT` - текст статуса ответа.
+- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+- `RESPONSE_BODY` - тело ответа.
+- `RESPONSE_HEADERS` - заголовки ответа.
+
+
 ### Функция `HTTP_UTILS.URL_ENCODE`
 
 Функция `HTTP_UTILS.URL_ENCODE` предназначена для URL кодирования строки.
@@ -86,45 +420,42 @@ SELECT
 FROM RDB$DATABASE;
 ```
 
-### Процедура `HTTP_UTILS.HTTP_REQUEST`
 
-Процедура `HTTP_UTILS.HTTP_REQUEST` предназначена для отправки HTTP запросов и получения HTTP ответа. 
-Это основная процедура с помощью которой происходит общение с web-сервисами.
+### Процедура `HTTP_UTILS.PARSE_URL`
+
+Процедура `HTTP_UTILS.PARSE_URL` предназначена для разбора URL на составные части.
 
 ```sql
-  PROCEDURE HTTP_REQUEST (
-    METHOD               D_HTTP_METHOD NOT NULL,
-    URL                  VARCHAR(8191) NOT NULL,
-    REQUEST_BODY         BLOB DEFAULT NULL,
-    REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
-    HEADERS              VARCHAR(8191) DEFAULT NULL,
-    OPTIONS              VARCHAR(8191) DEFAULT NULL
+  PROCEDURE PARSE_URL (
+    URL                  VARCHAR(8191)
   )
   RETURNS (
-    STATUS_CODE          SMALLINT,
-    STATUS_TEXT          VARCHAR(256),
-    RESPONSE_TYPE        VARCHAR(256),
-    RESPONSE_BODY        BLOB,
-    RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
+    URL_SCHEME           VARCHAR(64),
+    URL_USER             VARCHAR(64),
+    URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256),
+    URL_PORT             INTEGER,
+    URL_PATH             VARCHAR(8191),
+    URL_QUERY            VARCHAR(8191),
+    URL_FRAGMENT         VARCHAR(8191)
   );
 ```
 
 Входные параметры:
 
-- `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
-- `URL` - URL адрес. Обязательный параметр.
-- `REQUEST_BODY` - тело HTTP запроса.
-- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+- `URL` - URL адрес. 
 
-Входные параметры:
+Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
+- `URL_SCHEME` - схема, определяющая протокол.
+- `URL_USER` - имя пользователя.
+- `URL_PASSWORD` - пароль.
+- `URL_HOST` - хост.
+- `URL_PORT` - номер порта (1-65535) указанный в URL, если порт не указан, то возвращает NULL.
+- `URL_PATH` - URL путь. Часть пути будет равна '/', даже если в URL-адресе не указан путь. URL-путь всегда начинается с косой черты.
+- `URL_QUERY` - запрос (параметры).
+- `URL_FRAGMENT` - фрагмент (якорь).
+
 
 ## Примеры
 

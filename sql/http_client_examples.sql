@@ -81,6 +81,31 @@ SELECT
   ) AS URL
 FROM RDB$DATABASE;
 
+WITH T AS (
+    SELECT
+      RESPONSE_HEADERS
+    FROM HTTP_UTILS.HTTP_GET (
+      'https://www.cbr-xml-daily.ru/latest.js'
+    )
+)
+SELECT
+  H.HEADER_LINE,
+  H.HEADER_NAME,
+  H.HEADER_VALUE
+FROM T
+LEFT JOIN HTTP_UTILS.PARSE_HEADERS(T.RESPONSE_HEADERS) H ON TRUE;
+
+WITH T AS (
+    SELECT
+      RESPONSE_HEADERS
+    FROM HTTP_UTILS.HTTP_GET (
+      'https://www.cbr-xml-daily.ru/latest.js'
+    )
+)
+SELECT
+  HTTP_UTILS.GET_HEADER_VALUE(T.RESPONSE_HEADERS, 'age')
+FROM T;
+
 
 
 

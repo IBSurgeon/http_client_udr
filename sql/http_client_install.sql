@@ -407,6 +407,42 @@ BEGIN
     URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
   )
   RETURNS VARCHAR(8191);
+
+  /**
+   * Parses HTTP headers.
+   *
+   * Input parameters:
+   *
+   * - `HEADERS` - http headers.
+   *
+   * Output parameters:
+   *
+   * - `HEADER_LINE` - header line.
+   * - `HEADER_NAME` - header name.
+   * - `HEADER_VALUE` - header value.
+   */
+  PROCEDURE PARSE_HEADERS (
+    HEADERS              BLOB SUB_TYPE TEXT
+  )
+  RETURNS (
+    HEADER_LINE          VARCHAR(8191),
+    HEADER_NAME          VARCHAR(256),
+    HEADER_VALUE         VARCHAR(8191)
+  );
+
+  /**
+   * Returns the header value with the given name.
+   *
+   * Input parameters:
+   *
+   * - `HEADERS` - http headers.
+   * - `HEADER_NAME` - header name.
+   */
+  FUNCTION GET_HEADER_VALUE (
+    HEADERS              BLOB SUB_TYPE TEXT,
+    HEADER_NAME          VARCHAR(256)
+  )
+  RETURNS VARCHAR(8191);
 END^
 
 RECREATE PACKAGE BODY HTTP_UTILS
@@ -808,6 +844,26 @@ BEGIN
   RETURNS VARCHAR(8191)
   EXTERNAL NAME 'http_client_udr!appendQuery'
   ENGINE UDR;
-END^
+
+  PROCEDURE PARSE_HEADERS (
+    HEADERS              BLOB SUB_TYPE TEXT
+  )
+  RETURNS (
+    HEADER_LINE          VARCHAR(8191),
+    HEADER_NAME          VARCHAR(256),
+    HEADER_VALUE         VARCHAR(8191)
+  )
+  EXTERNAL NAME 'http_client_udr!parseHeaders'
+  ENGINE UDR;
+
+  FUNCTION GET_HEADER_VALUE (
+    HEADERS              BLOB SUB_TYPE TEXT,
+    HEADER_NAME          VARCHAR(256)
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!getHeaderValue'
+  ENGINE UDR;
+END
+^
 
 SET TERM ; ^

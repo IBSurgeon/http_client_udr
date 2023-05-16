@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Implementation of Http Client procedures and functions.
  *
  *  The original code was created by Simonov Denis
@@ -180,12 +180,12 @@ std::string extractResponseStatusText(long http_version, long statusCode, const 
     case CURL_HTTP_VERSION_2_0:
         preStatusText = "HTTP/2";
         break;
-#endif		
+#endif      
 #if CURL_AT_LEAST_VERSION(7,66,0)
     case CURL_HTTP_VERSION_3:
         preStatusText = "HTTP/3";
         break;
-#endif			
+#endif          
     }
     preStatusText += " " + std::to_string(statusCode) + " ";
 
@@ -483,7 +483,7 @@ void setCurlOptions(CURL* curl, const std::map<long, std::string>& options)
 
 
 /*
-  PROCEDURE SEND_REQUEST (
+  PROCEDURE HTTP_REQUEST (
     METHOD               VARCHAR(7) NOT NULL,
     URL                  VARCHAR(8191) NOT NULL,
     REQUEST_BODY         BLOB SUB_TYPE BINARY,
@@ -692,7 +692,7 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
 #if CURL_AT_LEAST_VERSION(7,50,0)
             curl_easy_getinfo(curl, CURLINFO_HTTP_VERSION, &m_http_version);
 #else
-	        m_http_version = CURL_HTTP_VERSION_1_1;
+            m_http_version = CURL_HTTP_VERSION_1_1;
 #endif
             m_needFetch = true;
         }
@@ -1452,6 +1452,189 @@ FB_UDR_BEGIN_FUNCTION(appendQuery)
             std::string errorMessage(curl_url_strerror(rc));
             throwException(status, errorMessage.c_str());
         }
+    }
+
+FB_UDR_END_FUNCTION
+
+
+/*
+  PROCEDURE PARSE_HEADERS (
+    HEADERS              BLOB SUB_TYPE TEXT
+  )
+  RETURNS (
+    HEADER_LINE          VARCHAR(8191),
+    HEADER_NAME          VARCHAR(256),
+    HEADER_VALUE         VARCHAR(8191)
+  )
+  EXTERNAL NAME 'http_client_udr!parseHeaders'
+  ENGINE UDR;
+*/
+
+FB_UDR_BEGIN_PROCEDURE(parseHeaders)
+
+    FB_UDR_MESSAGE(InMessage,
+        (FB_BLOB, headers)
+    );
+
+    FB_UDR_MESSAGE(OutMessage,
+        (FB_INTL_VARCHAR(32765, 0), headerLine)
+        (FB_INTL_VARCHAR(1024, 0), headerName)
+        (FB_INTL_VARCHAR(32765, 0), headerValue)
+    );
+
+    FB_UDR_EXECUTE_PROCEDURE
+    {
+        Firebird::AutoRelease<Firebird::IAttachment> att(context->getAttachment(status));
+        Firebird::AutoRelease<Firebird::ITransaction> tra(context->getTransaction(status));
+
+        
+        if (!in->headersNull) {
+            Firebird::AutoRelease<Firebird::IBlob> headersBlob(att->openBlob(status, tra, &in->headers, 0, nullptr));
+            bool eof = false;
+            std::vector<char> vBuffer(MAX_SEGMENT_SIZE);
+            auto buffer = vBuffer.data();
+            while (!eof) {
+                unsigned int l = 0;
+                switch (headersBlob->getSegment(status, MAX_SEGMENT_SIZE, buffer, &l))
+                {
+                case Firebird::IStatus::RESULT_OK:
+                case Firebird::IStatus::RESULT_SEGMENT:
+                    headers.write(buffer, l);
+                    break;
+                default:
+                    headersBlob->close(status);
+                    headersBlob.release();
+                    eof = true;
+                    break;
+                }
+            }
+            // set beginning of stream
+            headers.seekg(0, std::ios::beg);
+        }
+    }
+
+    std::stringstream headers{};
+
+    FB_UDR_FETCH_PROCEDURE
+    {
+        std::string line;
+        if (std::getline(headers, line, '\n')) {
+            trim(line);
+            out->headerLineNull = FB_FALSE;
+            out->headerLine.length = std::min<short>(line.size(), 32765);
+            line.copy(out->headerLine.str, out->headerLine.length);
+
+            auto colonPos = line.find(":");
+            if (colonPos != std::string::npos) {
+                out->headerNameNull = FB_FALSE;
+                out->headerValueNull = FB_FALSE;
+
+                std::string name = line.substr(0, colonPos);
+                std::string value = line.substr(colonPos + 1);
+
+                trim(name);             
+                out->headerName.length = std::min<short>(name.size(), 1024);
+                name.copy(out->headerName.str, out->headerName.length);
+
+                trim(value);
+                out->headerValue.length = std::min<short>(value.size(), 32765);
+                value.copy(out->headerValue.str, out->headerValue.length);
+            } 
+            else {
+                out->headerNameNull = FB_TRUE;
+                out->headerValueNull = FB_TRUE;
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+FB_UDR_END_PROCEDURE
+
+
+/*
+  FUNCTION GET_HEADER_VALUE (
+    HEADERS              BLOB SUB_TYPE TEXT,
+    HEADER_NAME          VARCHAR(256)
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!getHeaderValue'
+  ENGINE UDR;
+*/
+
+FB_UDR_BEGIN_FUNCTION(getHeaderValue)
+
+    FB_UDR_MESSAGE(InMessage,
+        (FB_BLOB, headers)
+        (FB_INTL_VARCHAR(1024, 0), headerName)
+    );
+
+    FB_UDR_MESSAGE(OutMessage,
+        (FB_INTL_VARCHAR(32765, 0), headerValue)
+    );
+
+    FB_UDR_EXECUTE_FUNCTION
+    {
+        if (in->headersNull || in->headerNameNull) {
+            out->headerValueNull = FB_TRUE;
+            return;
+        }
+        
+        std::string headerName(in->headerName.str, in->headerName.length);
+        std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::toupper);
+
+        Firebird::AutoRelease<Firebird::IAttachment> att(context->getAttachment(status));
+        Firebird::AutoRelease<Firebird::ITransaction> tra(context->getTransaction(status));
+
+        std::stringstream headers{};
+        Firebird::AutoRelease<Firebird::IBlob> headersBlob(att->openBlob(status, tra, &in->headers, 0, nullptr));
+        bool eof = false;
+        std::vector<char> vBuffer(MAX_SEGMENT_SIZE);
+        auto buffer = vBuffer.data();
+        while (!eof) {
+            unsigned int l = 0;
+            switch (headersBlob->getSegment(status, MAX_SEGMENT_SIZE, buffer, &l))
+            {
+                case Firebird::IStatus::RESULT_OK:
+                case Firebird::IStatus::RESULT_SEGMENT:
+                    headers.write(buffer, l);
+                    break;
+                default:
+                    headersBlob->close(status);
+                    headersBlob.release();
+                    eof = true;
+                    break;
+            }
+        }
+        // set beginning of stream
+        headers.seekg(0, std::ios::beg);
+
+        out->headerValueNull = FB_TRUE;
+
+        std::string line;
+        while (std::getline(headers, line, '\n')) {
+            trim(line);
+
+            auto colonPos = line.find(":");
+            if (colonPos != std::string::npos) {
+                std::string name = line.substr(0, colonPos);
+                trim(name);
+                std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+
+                if (name == headerName) {
+                    std::string value = line.substr(colonPos + 1);
+                    trim(value);
+
+                    out->headerValueNull = FB_FALSE;
+                    out->headerValue.length = std::min<short>(value.size(), 32765);
+                    value.copy(out->headerValue.str, out->headerValue.length);
+
+                    break;
+                }
+            }
+        }
+
     }
 
 FB_UDR_END_FUNCTION
