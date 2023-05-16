@@ -65,4 +65,22 @@ SELECT
   ) AS URL
 FROM RDB$DATABASE;
 
+SELECT
+  HTTP_UTILS.URL_APPEND_QUERY(
+    'https://localhost/?q=123',
+    'w=ìàìà',
+    TRUE
+  ) AS URL
+FROM RDB$DATABASE;
+
+SELECT
+  HTTP_UTILS.APPEND_QUERY(
+    'q=123',
+    'w=ìàìà',
+    TRUE
+  ) AS URL
+FROM RDB$DATABASE;
+
+
+
 

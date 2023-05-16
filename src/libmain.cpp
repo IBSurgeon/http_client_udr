@@ -940,15 +940,15 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
         if (!in->urlNull) {
             const std::string sUrl(in->url.str, in->url.length);
 
-            AutoCurlUrlCleanup<CURLU> url(curl_url());
-            auto rc = curl_url_set(url, CURLUPART_URL, sUrl.c_str(), 0);
+            AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
+            auto rc = curl_url_set(hUrl, CURLUPART_URL, sUrl.c_str(), 0);
             if (rc != CURLUE_OK) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
             }
             // scheme
             char* scheme = nullptr;
-            rc = curl_url_get(url, CURLUPART_SCHEME, &scheme, 0);
+            rc = curl_url_get(hUrl, CURLUPART_SCHEME, &scheme, 0);
             if (!rc) {
                 out->schemeNull = FB_FALSE;
                 if (scheme) {
@@ -974,7 +974,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // user
             char* user = nullptr;
-            rc = curl_url_get(url, CURLUPART_USER, &user, 0);
+            rc = curl_url_get(hUrl, CURLUPART_USER, &user, 0);
             if (!rc) {
                 out->userNull = FB_FALSE;
                 if (user) {
@@ -1000,7 +1000,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // password
             char* password = nullptr;
-            rc = curl_url_get(url, CURLUPART_PASSWORD, &password, 0);
+            rc = curl_url_get(hUrl, CURLUPART_PASSWORD, &password, 0);
             if (!rc) {
                 out->passwordNull = FB_FALSE;
                 if (password) {
@@ -1008,7 +1008,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     curl_free(password);
 
                     if (sPassword.size() > 256) {
-                        throwException(status, "The scheme PASSWORD of the URL is too long.");
+                        throwException(status, "The PASSWORD part of the URL is too long.");
                     }
                     out->password.length = std::min<short>(sPassword.size(), 256);
                     sPassword.copy(out->password.str, out->password.length);
@@ -1026,7 +1026,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // host
             char* host = nullptr;
-            rc = curl_url_get(url, CURLUPART_HOST, &host, 0);
+            rc = curl_url_get(hUrl, CURLUPART_HOST, &host, 0);
             if (!rc) {
                 out->hostNull = FB_FALSE;
                 if (host) {
@@ -1052,7 +1052,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // port
             char* port = nullptr;
-            rc = curl_url_get(url, CURLUPART_PORT, &port, 0);
+            rc = curl_url_get(hUrl, CURLUPART_PORT, &port, 0);
             if (!rc) {
                 out->portNull = FB_FALSE;
                 if (port) {
@@ -1060,7 +1060,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     curl_free(port);
 
                     if (sPort.size() > 5) {
-                        throwException(status, "The scheme PORT of the URL is too long.");
+                        throwException(status, "The PORT part of the URL is too long.");
                     }
                     try {
                         out->port = std::stol(sPort);
@@ -1085,7 +1085,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // path
             char* path = nullptr;
-            rc = curl_url_get(url, CURLUPART_PATH, &path, 0);
+            rc = curl_url_get(hUrl, CURLUPART_PATH, &path, 0);
             if (!rc) {
                 out->pathNull = FB_FALSE;
                 if (path) {
@@ -1093,7 +1093,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     curl_free(path);
 
                     if (sPath.size() > 32765) {
-                        throwException(status, "The scheme PATH of the URL is too long.");
+                        throwException(status, "The PATH part of the URL is too long.");
                     }
                     out->path.length = std::min<short>(sPath.size(), 32765);
                     sPath.copy(out->path.str, out->path.length);
@@ -1108,7 +1108,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // query
             char* query = nullptr;
-            rc = curl_url_get(url, CURLUPART_QUERY, &query, 0);
+            rc = curl_url_get(hUrl, CURLUPART_QUERY, &query, 0);
             if (!rc) {
                 out->queryNull = FB_FALSE;
                 if (query) {
@@ -1116,7 +1116,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     curl_free(query);
 
                     if (sQuery.size() > 32765) {
-                        throwException(status, "The scheme QUERY of the URL is too long.");
+                        throwException(status, "The QUERY part of the URL is too long.");
                     }
                     out->query.length = std::min<short>(sQuery.size(), 32765);
                     sQuery.copy(out->query.str, out->query.length);
@@ -1134,7 +1134,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
             }
             // fragment
             char* fragment = nullptr;
-            rc = curl_url_get(url, CURLUPART_FRAGMENT, &fragment, 0);
+            rc = curl_url_get(hUrl, CURLUPART_FRAGMENT, &fragment, 0);
             if (!rc) {
                 out->fragmentNull = FB_FALSE;
                 if (fragment) {
@@ -1142,7 +1142,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                     curl_free(fragment);
 
                     if (sFragment.size() > 32765) {
-                        throwException(status, "The scheme FRAGMENT of the URL is too long.");
+                        throwException(status, "The FRAGMENT part of the URL is too long.");
                     }
                     out->fragment.length = std::min<short>(sFragment.size(), 32765);
                     sFragment.copy(out->fragment.str, out->fragment.length);
@@ -1208,12 +1208,12 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
 
     FB_UDR_EXECUTE_FUNCTION
     {
-        AutoCurlUrlCleanup<CURLU> url(curl_url());
+        AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
         CURLUcode rc = CURLUE_OK;
         // scheme
         if (!in->schemeNull) {
             std::string scheme(in->scheme.str, in->scheme.length);
-            rc = curl_url_set(url, CURLUPART_SCHEME, scheme.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_SCHEME, scheme.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1222,7 +1222,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // user
         if (!in->userNull) {
             std::string user(in->user.str, in->user.length);
-            rc = curl_url_set(url, CURLUPART_USER, user.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_USER, user.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1231,7 +1231,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // password
         if (!in->passwordNull) {
             std::string password(in->password.str, in->password.length);
-            rc = curl_url_set(url, CURLUPART_PASSWORD, password.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_PASSWORD, password.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1240,7 +1240,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // host
         if (!in->hostNull) {
             std::string host(in->host.str, in->host.length);
-            rc = curl_url_set(url, CURLUPART_HOST, host.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_HOST, host.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1249,7 +1249,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // port
         if (!in->portNull) {
             std::string port = std::to_string(in->port);
-            rc = curl_url_set(url, CURLUPART_PORT, port.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_PORT, port.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1258,7 +1258,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // path
         if (!in->pathNull) {
             std::string path(in->path.str, in->path.length);
-            rc = curl_url_set(url, CURLUPART_PATH, path.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_PATH, path.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1267,7 +1267,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // query
         if (!in->queryNull) {
             std::string query(in->query.str, in->query.length);
-            rc = curl_url_set(url, CURLUPART_QUERY, query.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_QUERY, query.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1276,7 +1276,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         // fragment
         if (!in->fragmentNull) {
             std::string fragment(in->fragment.str, in->fragment.length);
-            rc = curl_url_set(url, CURLUPART_FRAGMENT, fragment.c_str(), 0);
+            rc = curl_url_set(hUrl, CURLUPART_FRAGMENT, fragment.c_str(), 0);
             if (rc) {
                 std::string errorMessage(curl_url_strerror(rc));
                 throwException(status, errorMessage.c_str());
@@ -1284,11 +1284,11 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
         }
         // build URL
         out->urlNull = FB_TRUE;
-        char* cUrl = nullptr;
-        rc = curl_url_get(url, CURLUPART_URL, &cUrl, 0);
+        char* url = nullptr;
+        rc = curl_url_get(hUrl, CURLUPART_URL, &url, 0);
         if (rc == CURLUE_OK) {
-            std::string sUrl(cUrl);
-            curl_free(cUrl);
+            std::string sUrl(url);
+            curl_free(url);
 
             out->urlNull = FB_FALSE;
 
@@ -1298,6 +1298,156 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
             out->url.length = std::min<short>(sUrl.size(), 32765);
             sUrl.copy(out->url.str, out->url.length);
         } 
+        else {
+            std::string errorMessage(curl_url_strerror(rc));
+            throwException(status, errorMessage.c_str());
+        }
+    }
+
+FB_UDR_END_FUNCTION
+
+/*
+  FUNCTION URL_APPEND_QUERY (
+    URL                  VARCHAR(8191) NOT NULL,
+    URL_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!urlAppendQuery'
+  ENGINE UDR;
+*/
+
+FB_UDR_BEGIN_FUNCTION(urlAppendQuery)
+
+    FB_UDR_MESSAGE(InMessage,
+        (FB_INTL_VARCHAR(32765, 0), url)
+        (FB_INTL_VARCHAR(32765, 0), query)
+        (FB_BOOLEAN, urlEncode)
+    );
+
+    FB_UDR_MESSAGE(OutMessage,
+        (FB_INTL_VARCHAR(32765, 0), url)
+    );
+
+    FB_UDR_EXECUTE_FUNCTION
+    {
+        AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
+        CURLUcode rc = CURLUE_OK;
+        // url
+        std::string url(in->url.str, in->url.length);
+        rc = curl_url_set(hUrl, CURLUPART_URL, url.c_str(), 0);
+        if (rc) {
+            std::string errorMessage(curl_url_strerror(rc));
+            throwException(status, errorMessage.c_str());
+        }
+        // query
+        if (!in->queryNull) {
+            std::string query(in->query.str, in->query.length);
+            rc = curl_url_set(hUrl, CURLUPART_QUERY, query.c_str(), in->urlEncode ? CURLU_APPENDQUERY | CURLU_URLENCODE : CURLU_APPENDQUERY);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+
+        // build URL
+        out->urlNull = FB_TRUE;
+        char* url_out = nullptr;
+        rc = curl_url_get(hUrl, CURLUPART_URL, &url_out, 0);
+        if (rc == CURLUE_OK) {
+            std::string sUrl(url_out);
+            curl_free(url_out);
+
+            out->urlNull = FB_FALSE;
+
+            if (sUrl.size() > 32765) {
+                throwException(status, "The URL is too long.");
+            }
+            out->url.length = std::min<short>(sUrl.size(), 32765);
+            sUrl.copy(out->url.str, out->url.length);
+        }
+        else {
+            std::string errorMessage(curl_url_strerror(rc));
+            throwException(status, errorMessage.c_str());
+        }
+    }
+
+FB_UDR_END_FUNCTION
+
+/*
+  FUNCTION APPEND_QUERY (
+    URL_QUERY            VARCHAR(8191),
+    NEW_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!appendQuery'
+  ENGINE UDR;
+*/
+
+FB_UDR_BEGIN_FUNCTION(appendQuery)
+
+    FB_UDR_MESSAGE(InMessage,
+        (FB_INTL_VARCHAR(32765, 0), query)
+        (FB_INTL_VARCHAR(32765, 0), newQuery)
+        (FB_BOOLEAN, urlEncode)
+    );
+
+    FB_UDR_MESSAGE(OutMessage,
+        (FB_INTL_VARCHAR(32765, 0), query)
+    );
+
+    FB_UDR_EXECUTE_FUNCTION
+    {
+        AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
+        CURLUcode rc = CURLUE_OK;
+        rc = curl_url_set(hUrl, CURLUPART_URL, "http://localhost", 0);
+        if (rc) {
+            std::string errorMessage(curl_url_strerror(rc));
+            throwException(status, errorMessage.c_str());
+        }
+        // query
+        if (!in->queryNull) {
+            std::string query(in->query.str, in->query.length);
+            rc = curl_url_set(hUrl, CURLUPART_QUERY, query.c_str(), 0);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+        // new query
+        if (!in->newQueryNull) {
+            std::string newQuery(in->newQuery.str, in->newQuery.length);
+            rc = curl_url_set(hUrl, CURLUPART_QUERY, newQuery.c_str(), in->urlEncode ? CURLU_APPENDQUERY | CURLU_URLENCODE : CURLU_APPENDQUERY);
+            if (rc) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+
+
+        // query
+        char* query_out = nullptr;
+        rc = curl_url_get(hUrl, CURLUPART_QUERY, &query_out, 0);
+        if (!rc) {
+            out->queryNull = FB_FALSE;
+            if (query_out) {
+                const std::string sQuery(query_out);
+                curl_free(query_out);
+
+                if (sQuery.size() > 32765) {
+                    throwException(status, "The QUERY part of the URL is too long.");
+                }
+                out->query.length = std::min<short>(sQuery.size(), 32765);
+                sQuery.copy(out->query.str, out->query.length);
+            }
+            else {
+                out->queryNull = FB_TRUE;
+            }
+        }
+        else if (rc == CURLUE_NO_QUERY) {
+            out->queryNull = FB_TRUE;
+        }
         else {
             std::string errorMessage(curl_url_strerror(rc));
             throwException(status, errorMessage.c_str());

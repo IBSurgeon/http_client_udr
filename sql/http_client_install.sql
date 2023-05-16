@@ -373,6 +373,40 @@ BEGIN
     URL_FRAGMENT         VARCHAR(8191) DEFAULT NULL
   )
   RETURNS VARCHAR(8191);
+
+  /**
+   * Adds a query to the URL.
+   *
+   * Input parameters:
+   *
+   * - `URL` - URL address.
+   * - `URL_QUERY` - query to add.
+   * - `URL_ENCODE` - if TRUE then the added string can be URL encoded when added,
+   *    the encoding process will skip the '=' character. Otherwise no URL encoding will be applied.
+   */
+  FUNCTION URL_APPEND_QUERY (
+    URL                  VARCHAR(8191) NOT NULL,
+    URL_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
+  )
+  RETURNS VARCHAR(8191);
+
+  /**
+   * Adds a query to the query part of URL.
+   *
+   * Input parameters:
+   *
+   * - `URL_QUERY` - old query part.
+   * - `NEW_QUERY` - query to add.
+   * - `URL_ENCODE` - if TRUE then the added string can be URL encoded when added,
+   *    the encoding process will skip the '=' character. Otherwise no URL encoding will be applied.
+   */
+  FUNCTION APPEND_QUERY (
+    URL_QUERY            VARCHAR(8191),
+    NEW_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
+  )
+  RETURNS VARCHAR(8191);
 END^
 
 RECREATE PACKAGE BODY HTTP_UTILS
@@ -755,6 +789,24 @@ BEGIN
   )
   RETURNS VARCHAR(8191)
   EXTERNAL NAME 'http_client_udr!buildUrl'
+  ENGINE UDR;
+
+  FUNCTION URL_APPEND_QUERY (
+    URL                  VARCHAR(8191) NOT NULL,
+    URL_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!urlAppendQuery'
+  ENGINE UDR;
+
+  FUNCTION APPEND_QUERY (
+    URL_QUERY            VARCHAR(8191),
+    NEW_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL
+  )
+  RETURNS VARCHAR(8191)
+  EXTERNAL NAME 'http_client_udr!appendQuery'
   ENGINE UDR;
 END^
 
