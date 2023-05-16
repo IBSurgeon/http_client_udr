@@ -13,7 +13,6 @@
 
 
 #include "UDR.h"
-#include <curl/curl.h>
 #include <string>
 #include <memory>
 #include <vector>
@@ -21,6 +20,7 @@
 #include <algorithm>
 #include <sstream>
 #include <cstdarg>
+#include <curl/curl.h>
 
 constexpr unsigned int BUFFER_LARGE = 16384;
 constexpr unsigned int MAX_SEGMENT_SIZE = 65535;
@@ -57,6 +57,17 @@ public:
 };
 
 template <typename T>
+class AutoCurlUrlCleanupClear
+{
+public:
+    static void clear(T* ptr)
+    {
+        if (ptr)
+            curl_url_cleanup(ptr);
+    }
+};
+
+template <typename T>
 class AutoCurlHeadersFreeClear
 {
 public:
@@ -72,6 +83,15 @@ template <typename T> class AutoCurlCleanup : public Firebird::AutoImpl<T, AutoC
 public:
     AutoCurlCleanup(T* ptr = nullptr)
         : Firebird::AutoImpl<T, AutoCurlCleanupClear<T> >(ptr)
+    {
+    }
+};
+
+template <typename T> class AutoCurlUrlCleanup : public Firebird::AutoImpl<T, AutoCurlUrlCleanupClear<T> >
+{
+public:
+    AutoCurlUrlCleanup(T* ptr = nullptr)
+        : Firebird::AutoImpl<T, AutoCurlUrlCleanupClear<T> >(ptr)
     {
     }
 };
@@ -93,6 +113,8 @@ enum class HttpMethod {
     Put,
     Patch,
     Delete,
+    Options,
+    Trace,
     None
 };
 
@@ -115,6 +137,12 @@ HttpMethod getHttpMethod(const std::string& httpMethod)
     }
     if (httpMethod == "DELETE") {
         return HttpMethod::Delete;
+    }
+    if (httpMethod == "OPTIONS") {
+        return HttpMethod::Options;
+    }
+    if (httpMethod == "TRACE") {
+        return HttpMethod::Trace;
     }
     return HttpMethod::None;
 }
@@ -148,12 +176,12 @@ std::string extractResponseStatusText(long http_version, long statusCode, const 
     case CURL_HTTP_VERSION_1_1:
         preStatusText = "HTTP/1.1";
         break;
-#ifdef CURL_HTTP_VERSION_2_0
+#if CURL_AT_LEAST_VERSION(7,33,0)
     case CURL_HTTP_VERSION_2_0:
         preStatusText = "HTTP/2";
         break;
 #endif		
-#ifdef CURL_HTTP_VERSION_3
+#if CURL_AT_LEAST_VERSION(7,66,0)
     case CURL_HTTP_VERSION_3:
         preStatusText = "HTTP/3";
         break;
@@ -196,8 +224,9 @@ size_t write_data(void* ptr, size_t size, size_t nmemb, void* stream)
     return size * nmemb;
 }
 
-void setCurlOptions(CURL* curl, const std::string& options)
+std::map<long, std::string> parseCurlOptions(const std::string& options)
 {
+    std::map<long, std::string> optionValues;
     size_t offset = 0;
     while (offset < options.size()) {
         size_t lPos = options.find("\r\n", offset);
@@ -217,56 +246,95 @@ void setCurlOptions(CURL* curl, const std::string& options)
             trim(value);
 
             if (key == "CURLOPT_DNS_SERVERS") {
-                curl_easy_setopt(curl, CURLOPT_DNS_SERVERS, value.c_str());
-            } else if (key == "CURLOPT_PROXY") {
-                curl_easy_setopt(curl, CURLOPT_PROXY, value.c_str());
-            } else if (key == "CURLOPT_PRE_PROXY") {
-                curl_easy_setopt(curl, CURLOPT_PRE_PROXY, value.c_str());
-            } else if (key == "CURLOPT_PROXYPORT") {
-                curl_easy_setopt(curl, CURLOPT_PROXYPORT, std::stol(value));
-            } else if (key == "CURLOPT_PROXYUSERPWD") {
-                curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, value.c_str());
-            } else if (key == "CURLOPT_PROXYUSERNAME") {
-                curl_easy_setopt(curl, CURLOPT_PROXYUSERNAME, value.c_str());
-            } else if (key == "CURLOPT_PROXYPASSWORD") {
-                curl_easy_setopt(curl, CURLOPT_PROXYPASSWORD, value.c_str());
-            } else if (key == "CURLOPT_PROXY_TLSAUTH_USERNAME") {
-                curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_USERNAME, value.c_str());
-            } else if (key == "CURLOPT_PROXY_TLSAUTH_USERNAME") {
-                curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_PASSWORD, value.c_str());
-            } else if (key == "CURLOPT_PROXY_TLSAUTH_TYPE") {
-                curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_PASSWORD, value.c_str());
-            } else if (key == "CURLOPT_TLSAUTH_USERNAME") {
-                curl_easy_setopt(curl, CURLOPT_TLSAUTH_USERNAME, value.c_str());
-            } else if (key == "CURLOPT_TLSAUTH_PASSWORD") {
-                curl_easy_setopt(curl, CURLOPT_TLSAUTH_PASSWORD, value.c_str());
-            } else if (key == "CURLOPT_TLSAUTH_TYPE") {
-                curl_easy_setopt(curl, CURLOPT_TLSAUTH_TYPE, value.c_str());
-            } else if (key == "CURLOPT_SSL_VERIFYHOST") {
-                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, std::stol(value));
-            } else if (key == "CURLOPT_SSL_VERIFYPEER") {
-                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, std::stol(value));
-            } else if (key == "CURLOPT_SSLCERT") {
-                curl_easy_setopt(curl, CURLOPT_SSLCERT, value.c_str());
-            } else if (key == "CURLOPT_SSLKEY") {
-                curl_easy_setopt(curl, CURLOPT_SSLCERT, value.c_str());
-            } else if (key == "CURLOPT_SSLCERTTYPE") {
-                curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, value.c_str());
-            } else if (key == "CURLOPT_CAINFO") {
-                curl_easy_setopt(curl, CURLOPT_CAINFO, value.c_str());
-            } else if (key == "CURLOPT_TIMEOUT") {
-                curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::stol(value));
-            } else if (key == "CURLOPT_TIMEOUT_MS") {
-                curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, std::stol(value));
-            } else if (key == "CURLOPT_TCP_KEEPALIVE") {
-                curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, std::stol(value));
-            } else if (key == "CURLOPT_TCP_KEEPIDLE") {
-                curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, std::stol(value));
-            } else if (key == "CURLOPT_CONNECTTIMEOUT") {
-                curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, std::stol(value));
-            } else if (key == "CURLOPT_USERAGENT") {
-                curl_easy_setopt(curl, CURLOPT_USERAGENT, value.c_str());
-            } else {
+                optionValues[CURLOPT_DNS_SERVERS] = value;
+            }
+            else if (key == "CURLOPT_PORT") {
+                optionValues[CURLOPT_PORT] = value;
+            }
+            else if (key == "CURLOPT_PROXY") {
+                optionValues[CURLOPT_PROXY] = value;
+            }
+            else if (key == "CURLOPT_PRE_PROXY") {
+                optionValues[CURLOPT_PRE_PROXY] = value;
+            }
+            else if (key == "CURLOPT_PROXYPORT") {
+                optionValues[CURLOPT_PROXYPORT] = value;
+            }
+            else if (key == "CURLOPT_PROXYUSERPWD") {
+                optionValues[CURLOPT_PROXYUSERPWD] = value;
+            }
+            else if (key == "CURLOPT_PROXYUSERNAME") {
+                optionValues[CURLOPT_PROXYUSERNAME] = value;
+            }
+            else if (key == "CURLOPT_PROXYPASSWORD") {
+                optionValues[CURLOPT_PROXYPASSWORD] = value;
+            }
+            else if (key == "CURLOPT_PROXY_TLSAUTH_USERNAME") {
+                optionValues[CURLOPT_PROXY_TLSAUTH_USERNAME] = value;
+            }
+            else if (key == "CURLOPT_PROXY_TLSAUTH_PASSWORD") {
+                optionValues[CURLOPT_PROXY_TLSAUTH_PASSWORD] = value;
+            }
+            else if (key == "CURLOPT_PROXY_TLSAUTH_TYPE") {
+                optionValues[CURLOPT_PROXY_TLSAUTH_TYPE] = value;
+            }
+            else if (key == "CURLOPT_TLSAUTH_USERNAME") {
+                optionValues[CURLOPT_TLSAUTH_USERNAME] = value;
+            }
+            else if (key == "CURLOPT_TLSAUTH_PASSWORD") {
+                optionValues[CURLOPT_TLSAUTH_PASSWORD] = value;
+            }
+            else if (key == "CURLOPT_TLSAUTH_TYPE") {
+                optionValues[CURLOPT_TLSAUTH_TYPE] = value;
+            }
+            else if (key == "CURLOPT_SSL_VERIFYHOST") {
+                optionValues[CURLOPT_SSL_VERIFYHOST] = value;
+            }
+            else if (key == "CURLOPT_SSL_VERIFYPEER") {
+                optionValues[CURLOPT_SSL_VERIFYPEER] = value;
+            }
+            else if (key == "CURLOPT_SSLCERT") {
+                optionValues[CURLOPT_SSLCERT] = value;
+            }
+            else if (key == "CURLOPT_SSLKEY") {
+                optionValues[CURLOPT_SSLKEY] = value;
+            }
+            else if (key == "CURLOPT_SSLCERTTYPE") {
+                optionValues[CURLOPT_SSLCERTTYPE] = value;
+            }
+            else if (key == "CURLOPT_CAINFO") {
+                optionValues[CURLOPT_CAINFO] = value;
+            }
+            else if (key == "CURLOPT_TIMEOUT") {
+                optionValues[CURLOPT_TIMEOUT] = value;
+            }
+            else if (key == "CURLOPT_TIMEOUT_MS") {
+                optionValues[CURLOPT_TIMEOUT_MS] = value;
+            }
+            else if (key == "CURLOPT_TCP_KEEPALIVE") {
+                optionValues[CURLOPT_TCP_KEEPALIVE] = value;
+            }
+            else if (key == "CURLOPT_TCP_KEEPIDLE") {
+                optionValues[CURLOPT_TCP_KEEPIDLE] = value;
+            }
+#if CURL_AT_LEAST_VERSION(7,25,0)
+            else if (key == "CURLOPT_TCP_KEEPINTVL") {
+                optionValues[CURLOPT_TCP_KEEPINTVL] = value;
+            }
+#endif
+            else if (key == "CURLOPT_CONNECTTIMEOUT") {
+                optionValues[CURLOPT_CONNECTTIMEOUT] = value;
+            }
+            else if (key == "CURLOPT_USERAGENT") {
+                optionValues[CURLOPT_USERAGENT] = value;
+            }
+            else if (key == "CURLOPT_FOLLOWLOCATION") {
+                optionValues[CURLOPT_FOLLOWLOCATION] = value;
+            }
+            else if (key == "CURLOPT_MAXREDIRS") {
+                optionValues[CURLOPT_MAXREDIRS] = value;
+            }
+            else {
                 throw std::runtime_error(std::string("Unsupported CURL option ") + key);
             }
 
@@ -276,13 +344,149 @@ void setCurlOptions(CURL* curl, const std::string& options)
         else
             offset = lPos + 1;
     }
+    return std::move(optionValues);
 }
+
+void setCurlOptions(CURL* curl, const std::map<long, std::string>& options) 
+{
+    for (const auto& [option, value] : options) {
+        switch (option) {
+        case CURLOPT_PORT:
+            curl_easy_setopt(curl, CURLOPT_PORT, std::stol(value));
+            break;
+
+        case CURLOPT_DNS_SERVERS:
+            curl_easy_setopt(curl, CURLOPT_DNS_SERVERS, value.c_str());
+            break;
+
+        case CURLOPT_PROXY:
+            curl_easy_setopt(curl, CURLOPT_PROXY, value.c_str());
+            break;
+
+        case CURLOPT_PRE_PROXY:
+            curl_easy_setopt(curl, CURLOPT_PRE_PROXY, value.c_str());
+            break;
+
+        case CURLOPT_PROXYPORT:
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, std::stol(value));
+            break;
+
+        case CURLOPT_PROXYUSERPWD:
+            curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, value.c_str());
+            break;
+
+        case CURLOPT_PROXYUSERNAME:
+            curl_easy_setopt(curl, CURLOPT_PROXYUSERNAME, value.c_str());
+            break;
+
+        case CURLOPT_PROXYPASSWORD:
+            curl_easy_setopt(curl, CURLOPT_PROXYPASSWORD, value.c_str());
+            break;
+
+        case CURLOPT_PROXY_TLSAUTH_USERNAME:
+            curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_USERNAME, value.c_str());
+            break;
+
+        case CURLOPT_PROXY_TLSAUTH_PASSWORD:
+            curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_PASSWORD, value.c_str());
+            break;
+
+        case CURLOPT_PROXY_TLSAUTH_TYPE:
+            curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_TYPE, value.c_str());
+            break;
+
+        case CURLOPT_TLSAUTH_USERNAME:
+            curl_easy_setopt(curl, CURLOPT_TLSAUTH_USERNAME, value.c_str());
+            break;
+
+        case CURLOPT_TLSAUTH_PASSWORD:
+            curl_easy_setopt(curl, CURLOPT_TLSAUTH_PASSWORD, value.c_str());
+            break;
+
+        case CURLOPT_TLSAUTH_TYPE:
+            curl_easy_setopt(curl, CURLOPT_TLSAUTH_TYPE, value.c_str());
+            break;
+
+        case CURLOPT_SSL_VERIFYHOST:
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, std::stol(value));
+            break;
+
+        case CURLOPT_SSL_VERIFYPEER:
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, std::stol(value));
+            break;
+
+        case CURLOPT_SSLCERT:
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, value.c_str());
+            break;
+
+        case CURLOPT_SSLKEY:
+            curl_easy_setopt(curl, CURLOPT_SSLKEY, value.c_str());
+            break;
+
+        case CURLOPT_SSLCERTTYPE:
+            curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, value.c_str());
+            break;
+
+        case CURLOPT_CAINFO:
+            curl_easy_setopt(curl, CURLOPT_CAINFO, value.c_str());
+            break;
+
+        case CURLOPT_TIMEOUT:
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, std::stol(value));
+            break;
+
+        case CURLOPT_TIMEOUT_MS:
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, std::stol(value));
+            break;
+
+        case CURLOPT_TCP_KEEPALIVE:
+            curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, std::stol(value));
+            break;
+
+        case CURLOPT_TCP_KEEPIDLE:
+            curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, std::stol(value));
+            break;
+
+#if CURL_AT_LEAST_VERSION(7,25,0)
+        case CURLOPT_TCP_KEEPINTVL:
+            curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, std::stol(value));
+            break;
+#endif
+
+        case CURLOPT_CONNECTTIMEOUT:
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, std::stol(value));
+            break;
+
+        case CURLOPT_USERAGENT:
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, value.c_str());
+            break;
+
+        case CURLOPT_FOLLOWLOCATION:
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, std::stol(value));
+            break;
+
+        case CURLOPT_MAXREDIRS:
+            curl_easy_setopt(curl, CURLOPT_MAXREDIRS, std::stol(value));
+            break;
+        }
+    }
+    // Some default values differ from those accepted in libCurl.
+    if (options.find(CURLOPT_FOLLOWLOCATION) == options.cend()) {
+        // go to the "Location:" specified in the HTTP header
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    }
+    if (options.find(CURLOPT_MAXREDIRS) == options.cend()) {
+        curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
+    }
+}
+
+
 
 /*
   PROCEDURE SEND_REQUEST (
-    METHOD               VARCHAR(6) NOT NULL,
-    URL                  VARCHAR(1024) NOT NULL,
-    REQUEST_BODY         BLOB SUB_TYPE TEXT,
+    METHOD               VARCHAR(7) NOT NULL,
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB SUB_TYPE BINARY,
     REQUEST_TYPE         VARCHAR(256),
     HEADERS              VARCHAR(8191),
     OPTIONS              VARCHAR(8191)
@@ -291,7 +495,7 @@ void setCurlOptions(CURL* curl, const std::string& options)
     STATUS_CODE          SMALLINT,
     STATUS_TEXT          VARCHAR(256),
     RESPONSE_TYPE        VARCHAR(256),
-    RESPONSE_BODY        BLOB SUB_TYPE TEXT,
+    RESPONSE_BODY        BLOB SUB_TYPE BINARY,
     RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
   )
   EXTERNAL NAME 'http_client_udr!sendHttpRequest'
@@ -301,8 +505,8 @@ void setCurlOptions(CURL* curl, const std::string& options)
 FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
 
     FB_UDR_MESSAGE(InMessage,
-        (FB_INTL_VARCHAR(24, 0), method)
-        (FB_INTL_VARCHAR(4096, 0), url)
+        (FB_INTL_VARCHAR(28, 0), method)
+        (FB_INTL_VARCHAR(32765, 0), url)
         (FB_BLOB, body)
         (FB_INTL_VARCHAR(1024, 0), contentType)
         (FB_INTL_VARCHAR(32765, 0), headers)
@@ -323,28 +527,29 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         m_tra.reset(context->getTransaction(status));
 
         if (in->methodNull) {
-            throwException(status, "HTTP_METHOD can not be NULL");
+            throwException(status, "HTTP_METHOD can not be NULL.");
         }
         const std::string sHttpMethod(in->method.str, in->method.length);
 
         auto httpMethod = getHttpMethod(sHttpMethod);
         if (httpMethod == HttpMethod::None) {
-            throwException(status, "Unsupported http method %s", sHttpMethod.c_str());
+            throwException(status, "Unsupported HTTP method %s.", sHttpMethod.c_str());
         }
 
         if (in->urlNull) {
-            throwException(status, "URL can not be NULL");
+            throwException(status, "URL can not be NULL.");
         }
         const std::string url(in->url.str, in->url.length);
 
         AutoCurlCleanup<CURL> curl(curl_easy_init());
 
         if (!curl) {
-            throwException(status, "Cannot CURL init");
+            throwException(status, "Can't initialize CURL.");
         }
 
         // buffer for storing text errors
         char curlErrorBuffer[CURL_ERROR_SIZE];
+        memset(curlErrorBuffer, 0, CURL_ERROR_SIZE);
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curlErrorBuffer);
 
         // set url
@@ -352,13 +557,13 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
 
         // set Http method
         switch (httpMethod) {
-        case HttpMethod::Get:
+        case HttpMethod::Get: 
             break;
         case HttpMethod::Head:
-            curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+            curl_easy_setopt(curl, CURLOPT_NOBODY, 1L); // HEAD
             break;
         case HttpMethod::Post:
-            curl_easy_setopt(curl, CURLOPT_POST, 1L);
+            curl_easy_setopt(curl, CURLOPT_POST, 1L); // POST
             break;
         case HttpMethod::Put:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -369,14 +574,20 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
         case HttpMethod::Delete:
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
             break;
+        case HttpMethod::Options:
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
+            break;
+        case HttpMethod::Trace:
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "TRACE");
+            break;
         default:
-            throwException(status, "Http method %s in not supported", sHttpMethod.c_str());
+            throwException(status, "HTTP method %s in not supported.", sHttpMethod.c_str());
         }
         
         if (!in->optionsNull) {
             std::string curlOptions(in->options.str, in->options.length);
             try {
-                setCurlOptions(curl, curlOptions);
+                setCurlOptions(curl, parseCurlOptions(curlOptions));
             }
             catch (const std::runtime_error &e) {
                 throwException(status, e.what());
@@ -447,11 +658,6 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
             curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
         }
 
-
-        // go to the "Location:" specified in the HTTP header
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-        curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
-
         // function called by cURL to record received headers 
         curl_easy_setopt(curl, CURLOPT_HEADERDATA, &m_responseHeaders);
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, write_data);
@@ -483,16 +689,19 @@ FB_UDR_BEGIN_PROCEDURE(sendHttpRequest)
                 throwException(status, curlErrorBuffer);
             }
 
-#ifdef CURLINFO_HTTP_VERSION
+#if CURL_AT_LEAST_VERSION(7,50,0)
             curl_easy_getinfo(curl, CURLINFO_HTTP_VERSION, &m_http_version);
 #else
 	        m_http_version = CURL_HTTP_VERSION_1_1;
 #endif
-
             m_needFetch = true;
         }
         else {
-            throwException(status, curlErrorBuffer);
+            std::string curlErrorMessage(curlErrorBuffer);
+            if (curlErrorMessage.empty())
+                curlErrorMessage.assign(curl_easy_strerror(curlResult));
+
+            throwException(status, curlErrorMessage.c_str());
         }
 
 
@@ -597,9 +806,9 @@ FB_UDR_END_PROCEDURE
 
 /*
   FUNCTION URL_ENCODE (
-    URL VARCHAR(1024),
+    STR VARCHAR(8191),
   )
-  RETURNS VARCHAR(1024)
+  RETURNS VARCHAR(8191)
   EXTERNAL NAME 'http_client_udr!urlEncode'
   ENGINE UDR;
 */
@@ -607,35 +816,35 @@ FB_UDR_END_PROCEDURE
 FB_UDR_BEGIN_FUNCTION(urlEncode)
 
     FB_UDR_MESSAGE(InMessage,
-        (FB_INTL_VARCHAR(4096, 0), url)
+        (FB_INTL_VARCHAR(32765, 0), str)
     );
 
     FB_UDR_MESSAGE(OutMessage,
-        (FB_INTL_VARCHAR(4096, 0), url)
+        (FB_INTL_VARCHAR(32765, 0), str)
     );
 
     FB_UDR_EXECUTE_FUNCTION
     {
-        if (in->urlNull) {
-            out->urlNull = true;
+        if (in->strNull) {
+            out->strNull = true;
             return;
         }
-        out->urlNull = false;
+        out->strNull = false;
         
 
         AutoCurlCleanup<CURL> curl(curl_easy_init());
 
         if (!curl) {
-            throwException(status, "Cannot CURL init");
+            throwException(status, "Can't initialize CURL.");
         }
 
-        char* output = curl_easy_escape(curl, in->url.str, in->url.length);
+        char* output = curl_easy_escape(curl, in->str.str, in->str.length);
         if (output) {
-            const std::string url(output);
+            const std::string str(output);
             curl_free(output);
 
-            out->url.length = std::min<short>(url.size(), 4096);
-            url.copy(out->url.str, out->url.length);
+            out->str.length = std::min<short>(str.size(), 4096);
+            str.copy(out->str.str, out->str.length);
         }
 
     }
@@ -644,9 +853,9 @@ FB_UDR_END_FUNCTION
 
 /*
   FUNCTION URL_DECODE (
-    URL VARCHAR(1024),
+    STR VARCHAR(8191),
   )
-  RETURNS VARCHAR(1024)
+  RETURNS VARCHAR(8191)
   EXTERNAL NAME 'http_client_udr!urlDecode'
   ENGINE UDR;
 */
@@ -654,40 +863,316 @@ FB_UDR_END_FUNCTION
 FB_UDR_BEGIN_FUNCTION(urlDecode)
 
     FB_UDR_MESSAGE(InMessage,
-        (FB_INTL_VARCHAR(4096, 0), url)
+        (FB_INTL_VARCHAR(32765, 0), str)
     );
 
     FB_UDR_MESSAGE(OutMessage,
-        (FB_INTL_VARCHAR(4096, 0), url)
+        (FB_INTL_VARCHAR(32765, 0), str)
     );
 
     FB_UDR_EXECUTE_FUNCTION
     {
-        if (in->urlNull) {
-            out->urlNull = true;
+        if (in->strNull) {
+            out->strNull = true;
             return;
         }
-        out->urlNull = false;
+        out->strNull = false;
 
 
         AutoCurlCleanup<CURL> curl(curl_easy_init());
 
         if (!curl) {
-            throwException(status, "Cannot CURL init");
+            throwException(status, "Can't initialize CURL.");
         }
 
         int outLength = 0;
-        char* output = curl_easy_unescape(curl, in->url.str, in->url.length, &outLength);
+        char* output = curl_easy_unescape(curl, in->str.str, in->str.length, &outLength);
         if (output) {
-            const std::string url(output, outLength);
+            const std::string str(output, outLength);
             curl_free(output);
 
-            out->url.length = std::min<short>(url.size(), 4096);
-            url.copy(out->url.str, out->url.length);
+            out->str.length = std::min<short>(str.size(), 32765);
+            str.copy(out->str.str, out->str.length);
         }
 
     }
 
 FB_UDR_END_FUNCTION
+
+/*
+  PROCEDURE PARSE_URL (
+    URL                  VARCHAR(8191)
+  )
+  RETURNS (
+    URL_HOST             VARCHAR(256),
+    URL_SCHEME           VARCHAR(64),
+    URL_USER             VARCHAR(64),
+    URL_PASSWORD         VARCHAR(64),
+    URL_PORT             INTEGER,
+    URL_PATH             VARCHAR(8191),
+    URL_QUERY            VARCHAR(8191),
+    URL_FRAGMENT         VARCHAR(8191)
+  )
+  EXTERNAL NAME 'http_client_udr!parseUrl'
+  ENGINE UDR;
+*/
+
+FB_UDR_BEGIN_PROCEDURE(parseUrl)
+
+    FB_UDR_MESSAGE(InMessage,
+        (FB_INTL_VARCHAR(32765, 0), url)
+    );
+
+    FB_UDR_MESSAGE(OutMessage,
+        (FB_INTL_VARCHAR(1024, 0), host)
+        (FB_INTL_VARCHAR(256, 0), scheme)
+        (FB_INTL_VARCHAR(256, 0), user)
+        (FB_INTL_VARCHAR(256, 0), password)
+        (FB_INTEGER, port)
+        (FB_INTL_VARCHAR(32765, 0), path)
+        (FB_INTL_VARCHAR(32765, 0), query)
+        (FB_INTL_VARCHAR(32765, 0), fragment)
+    );
+
+    FB_UDR_EXECUTE_PROCEDURE
+    {
+        m_needFetch = !in->urlNull;
+        if (!in->urlNull) {
+            const std::string sUrl(in->url.str, in->url.length);
+
+            AutoCurlUrlCleanup<CURLU> url(curl_url());
+            auto rc = curl_url_set(url, CURLUPART_URL, sUrl.c_str(), 0);
+            if (rc != CURLE_OK) {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // host
+            char* host = nullptr;
+            rc = curl_url_get(url, CURLUPART_HOST, &host, 0);
+            if (!rc) {
+                out->hostNull = false;
+                if (host) {
+                    const std::string sHost(host);
+                    curl_free(host);
+
+                    if (sHost.size() > 1024) {
+                        throwException(status, "The HOST part of the URL is too long.");
+                    }
+                    out->host.length = std::min<short>(sHost.size(), 1024);
+                    sHost.copy(out->host.str, out->host.length);
+                }
+                else {
+                    out->hostNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_HOST) {
+                out->hostNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // scheme
+            char* scheme = nullptr;
+            rc = curl_url_get(url, CURLUPART_SCHEME, &scheme, 0);
+            if (!rc) {
+                out->schemeNull = false;
+                if (host) {
+                    const std::string sScheme(scheme);
+                    curl_free(scheme);
+
+                    if (sScheme.size() > 256) {
+                        throwException(status, "The SCHEME part of the URL is too long.");
+                    }
+                    out->scheme.length = std::min<short>(sScheme.size(), 256);
+                    sScheme.copy(out->scheme.str, out->scheme.length);
+                }
+                else {
+                    out->schemeNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_SCHEME) {
+                out->schemeNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // user
+            char* user = nullptr;
+            rc = curl_url_get(url, CURLUPART_USER, &user, 0);
+            if (!rc) {
+                out->userNull = false;
+                if (user) {
+                    const std::string sUser(user);
+                    curl_free(user);
+
+                    if (sUser.size() > 256) {
+                        throwException(status, "The USER part of the URL is too long.");
+                    }
+                    out->user.length = std::min<short>(sUser.size(), 256);
+                    sUser.copy(out->user.str, out->user.length);
+                }
+                else {
+                    out->userNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_USER) {
+                out->userNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // password
+            char* password = nullptr;
+            rc = curl_url_get(url, CURLUPART_PASSWORD, &password, 0);
+            if (!rc) {
+                out->passwordNull = false;
+                if (password) {
+                    const std::string sPassword(password);
+                    curl_free(password);
+
+                    if (sPassword.size() > 256) {
+                        throwException(status, "The scheme PASSWORD of the URL is too long.");
+                    }
+                    out->password.length = std::min<short>(sPassword.size(), 256);
+                    sPassword.copy(out->password.str, out->password.length);
+                }
+                else {
+                    out->passwordNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_PASSWORD) {
+                out->passwordNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // port
+            char* port = nullptr;
+            rc = curl_url_get(url, CURLUPART_PORT, &port, 0);
+            if (!rc) {
+                out->portNull = false;
+                if (port) {
+                    const std::string sPort(port);
+                    curl_free(port);
+
+                    if (sPort.size() > 5) {
+                        throwException(status, "The scheme PORT of the URL is too long.");
+                    }
+                    try {
+                        out->port = std::stol(sPort);
+                    }
+                    catch (const std::invalid_argument& e) {
+                        throwException(status, e.what());
+                    }
+                    catch (const std::out_of_range& e) {
+                        throwException(status, e.what());
+                    }
+                }
+                else {
+                    out->portNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_PORT) {
+                out->portNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // path
+            char* path = nullptr;
+            rc = curl_url_get(url, CURLUPART_PATH, &path, 0);
+            if (!rc) {
+                out->pathNull = false;
+                if (path) {
+                    const std::string sPath(path);
+                    curl_free(path);
+
+                    if (sPath.size() > 32765) {
+                        throwException(status, "The scheme PATH of the URL is too long.");
+                    }
+                    out->path.length = std::min<short>(sPath.size(), 32765);
+                    sPath.copy(out->path.str, out->path.length);
+                }
+                else {
+                    out->pathNull = true;
+                }
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // query
+            char* query = nullptr;
+            rc = curl_url_get(url, CURLUPART_QUERY, &query, 0);
+            if (!rc) {
+                out->queryNull = false;
+                if (query) {
+                    const std::string sQuery(query);
+                    curl_free(query);
+
+                    if (sQuery.size() > 32765) {
+                        throwException(status, "The scheme QUERY of the URL is too long.");
+                    }
+                    out->query.length = std::min<short>(sQuery.size(), 32765);
+                    sQuery.copy(out->query.str, out->query.length);
+                }
+                else {
+                    out->queryNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_QUERY) {
+                out->queryNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+            // fragment
+            char* fragment = nullptr;
+            rc = curl_url_get(url, CURLUPART_FRAGMENT, &fragment, 0);
+            if (!rc) {
+                out->fragmentNull = false;
+                if (fragment) {
+                    const std::string sFragment(fragment);
+                    curl_free(fragment);
+
+                    if (sFragment.size() > 32765) {
+                        throwException(status, "The scheme FRAGMENT of the URL is too long.");
+                    }
+                    out->fragment.length = std::min<short>(sFragment.size(), 32765);
+                    sFragment.copy(out->fragment.str, out->fragment.length);
+                }
+                else {
+                    out->fragmentNull = true;
+                }
+            }
+            else if (rc == CURLUE_NO_FRAGMENT) {
+                out->fragmentNull = true;
+            }
+            else {
+                std::string errorMessage(curl_url_strerror(rc));
+                throwException(status, errorMessage.c_str());
+            }
+        }
+
+    }
+
+    bool m_needFetch = false;
+
+    FB_UDR_FETCH_PROCEDURE
+    {
+        bool needFetch = m_needFetch;
+        m_needFetch = false;
+        return needFetch;
+    }
+
+FB_UDR_END_PROCEDURE
+
+
 
 FB_UDR_IMPLEMENT_ENTRY_POINT

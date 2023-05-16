@@ -1,6 +1,6 @@
 # IBSurgeon HTTP Client UDR
 
-Библиотека IBSurgeon HTTP Client UDR предназначена для работы с HTTP сервисами (получение и отправка данных).
+Библиотека IBSurgeon HTTP Client UDR предназначена для работы с HTTP сервисами (REST-API и другие).
 HTTP Client UDR разработана на основе [libcurl](https://curl.se/libcurl/).
 
 ## Установка HTTP Client UDR
@@ -54,9 +54,9 @@ $ sudo make install
 
 ```sql
   FUNCTION URL_ENCODE (
-    URL VARCHAR(1024)
+    STR VARCHAR(8191)
   )
-  RETURNS VARCHAR(1024);
+  RETURNS VARCHAR(8191);
 ```
 
 Пример использования:
@@ -73,9 +73,9 @@ FROM RDB$DATABASE;
 
 ```sql
   FUNCTION URL_DECODE (
-    URL VARCHAR(1024)
+    STR VARCHAR(8191)
   )
-  RETURNS VARCHAR(1024);
+  RETURNS VARCHAR(8191);
 ```
 
 Пример использования:
@@ -86,35 +86,37 @@ SELECT
 FROM RDB$DATABASE;
 ```
 
-### Процедура `HTTP_UTILS.SEND_REQUEST`
+### Процедура `HTTP_UTILS.HTTP_REQUEST`
 
-Процедура `HTTP_UTILS.SEND_REQUEST` предназначена для отправки HTTP запросов и получения HTTP ответа. 
+Процедура `HTTP_UTILS.HTTP_REQUEST` предназначена для отправки HTTP запросов и получения HTTP ответа. 
 Это основная процедура с помощью которой происходит общение с web-сервисами.
 
 ```sql
-  PROCEDURE SEND_REQUEST (
+  PROCEDURE HTTP_REQUEST (
     METHOD               D_HTTP_METHOD NOT NULL,
-    URL                  VARCHAR(1024) NOT NULL,
-    REQUEST_BODY         BLOB SUB_TYPE TEXT DEFAULT NULL,
+    URL                  VARCHAR(8191) NOT NULL,
+    REQUEST_BODY         BLOB DEFAULT NULL,
     REQUEST_TYPE         VARCHAR(256) DEFAULT NULL,
-    HEADERS              VARCHAR(8191) DEFAULT NULL
+    HEADERS              VARCHAR(8191) DEFAULT NULL,
+    OPTIONS              VARCHAR(8191) DEFAULT NULL
   )
   RETURNS (
     STATUS_CODE          SMALLINT,
     STATUS_TEXT          VARCHAR(256),
     RESPONSE_TYPE        VARCHAR(256),
-    RESPONSE_BODY        BLOB SUB_TYPE TEXT,
+    RESPONSE_BODY        BLOB,
     RESPONSE_HEADERS     BLOB SUB_TYPE TEXT
   );
 ```
 
 Входные параметры:
 
-- `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'.
-- `URL` - URL адрес.
+- `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
+- `URL` - URL адрес. Обязательный параметр.
 - `REQUEST_BODY` - тело HTTP запроса.
 - `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
 - `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+- `OPTIONS` - опции библиотеки CURL.
 
 Входные параметры:
 
@@ -122,7 +124,7 @@ FROM RDB$DATABASE;
 - `STATUS_TEXT` - текст статуса ответа.
 - `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
 - `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответов.
+- `RESPONSE_HEADERS` - заголовки ответа.
 
 ## Примеры
 
@@ -135,7 +137,7 @@ SELECT
   RESPONSE_TYPE,
   RESPONSE_HEADERS,
   RESPONSE_BODY
-FROM HTTP_UTILS.SEND_REQUEST (
+FROM HTTP_UTILS.HTTP_REQUEST (
   'GET',
   'https://www.cbr-xml-daily.ru/latest.js'
 );
@@ -150,7 +152,7 @@ SELECT
   RESPONSE_TYPE,
   RESPONSE_HEADERS,
   RESPONSE_BODY
-FROM HTTP_UTILS.SEND_REQUEST (
+FROM HTTP_UTILS.HTTP_REQUEST (
   'POST',
   'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party',
   trim('
