@@ -8,7 +8,7 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 Для установки HTTP Client UDR необходимо:
 
 1. Распаковать zip архив с динамическими библиотеками в каталог `plugins\udr`
-2. Выполнить скрипт `sql\http_client_install.sql` для регистрации процедур и функций в БД. 
+2. Выполнить скрипт `sql\http_client_install.sql` для регистрации процедур и функций в БД.
 
 Скачать готовые сборки под ОС Windows можно по ссылкам:
 
@@ -19,7 +19,7 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 
 * [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_CentOS7_x64.zip)
 
-Вся процедуры и функции для работы с библиотекой HTTP Client инкапсулированы в PSQL пакете `HTTP_UTILS`.
+Вся процедуры и функции для работы с библиотекой HTTP Client расположены в PSQL пакете `HTTP_UTILS`.
 
 ## Сборка под Linux
 
@@ -52,8 +52,7 @@ sudo make install
 
 ### Процедура `HTTP_UTILS.HTTP_REQUEST`
 
-Процедура `HTTP_UTILS.HTTP_REQUEST` предназначена для отправки HTTP запроса и получения HTTP ответа. 
-Это основная процедура с помощью которой происходит общение с web-сервисами.
+Процедура `HTTP_UTILS.HTTP_REQUEST` предназначена для отправки HTTP запроса и получения HTTP ответа.
 
 ```sql
   PROCEDURE HTTP_REQUEST (
@@ -90,9 +89,15 @@ sudo make install
 * `RESPONSE_BODY` - тело ответа.
 * `RESPONSE_HEADERS` - заголовки ответа.
 
+Процедура `HTTP_UTILS.HTTP_REQUEST` является основной процедурой с помощью которой происходит общение с web-сервисами.
+Процедуры `HTTP_UTILS.HTTP_GET`, `HTTP_UTILS.HTTP_HEAD`, `HTTP_UTILS.HTTP_POST`, `HTTP_UTILS.HTTP_PUT`, `HTTP_UTILS.HTTP_PATCH`,
+`HTTP_UTILS.HTTP_DELETE`, `HTTP_UTILS.HTTP_OPTIONS`, `HTTP_UTILS.HTTP_TRACE` являются производными от `HTTP_UTILS.HTTP_REQUEST`.
+Внутри они вызывают `HTTP_UTILS.HTTP_REQUEST` с заполненным параметром `METHOD`, а также убираются лишние входные и выходные параметры, что
+упрощает обращение к web-ресурсу определённым HTTP методом.
+
 ### Процедура `HTTP_UTILS.HTTP_GET`
 
-Процедура `HTTP_UTILS.HTTP_GET` предназначена для отправки HTTP запроса методом GET. 
+Процедура `HTTP_UTILS.HTTP_GET` предназначена для отправки HTTP запроса методом GET.
 
 ```sql
   PROCEDURE HTTP_GET (
@@ -306,7 +311,6 @@ sudo make install
 
 Процедура `HTTP_UTILS.HTTP_OPTIONS` предназначена для отправки HTTP запроса методом OPTIONS. 
 
-
 ```sql
   PROCEDURE HTTP_OPTIONS (
     URL                  VARCHAR(8191) NOT NULL,
@@ -324,23 +328,21 @@ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_TRACE`
 
-Процедура `HTTP_UTILS.HTTP_TRACE` предназначена для отправки HTTP запроса методом TRACE. 
-
+Процедура `HTTP_UTILS.HTTP_TRACE` предназначена для отправки HTTP запроса методом TRACE.
 
 ```sql
   PROCEDURE HTTP_TRACE (
@@ -359,18 +361,17 @@ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Функция `HTTP_UTILS.URL_ENCODE`
 
@@ -410,11 +411,10 @@ SELECT
 FROM RDB$DATABASE;
 ```
 
-
 ### Процедура `HTTP_UTILS.PARSE_URL`
 
 Процедура `HTTP_UTILS.PARSE_URL` предназначена для разбора URL на составные части,
-согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986). 
+согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986).
 
 ```sql
   PROCEDURE PARSE_URL (
@@ -434,7 +434,7 @@ FROM RDB$DATABASE;
 
 Входные параметры:
 
-* `URL` - URL адрес, в формате `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`
+* `URL` - URL адрес, в формате `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
 
 Выходные параметры:
 
@@ -464,7 +464,179 @@ FROM HTTP_UTILS.PARSE_URL('https://user:password@server:8080/part/put?a=1&b=2#fr
 
 ### Функция `HTTP_UTILS.BUILD_URL`
 
-Функция `HTTP_UTILS.BUILD_URL` собирает URL из составных частей
+Функция `HTTP_UTILS.BUILD_URL` собирает URL из составных частей, согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986).
+
+```sql
+  FUNCTION BUILD_URL (
+    URL_SCHEME           VARCHAR(64) NOT NULL,
+    URL_USER             VARCHAR(64),
+    URL_PASSWORD         VARCHAR(64),
+    URL_HOST             VARCHAR(256) NOT NULL,
+    URL_PORT             INTEGER DEFAULT NULL,
+    URL_PATH             VARCHAR(8191) DEFAULT NULL,
+    URL_QUERY            VARCHAR(8191) DEFAULT NULL,
+    URL_FRAGMENT         VARCHAR(8191) DEFAULT NULL
+  )
+  RETURNS VARCHAR(8191);
+```
+
+Входные параметры:
+
+* `URL_SCHEME` - схема, определяющая протокол.
+* `URL_USER` - имя пользователя.
+* `URL_PASSWORD` - пароль.
+* `URL_HOST` - хост.
+* `URL_PORT` - номер порта (1-65535) указанный в URL, если порт не указан, то возвращает NULL.
+* `URL_PATH` - URL путь. Часть пути будет равна '/', даже если в URL-адресе не указан путь. URL-путь всегда начинается с косой черты.
+* `URL_QUERY` - запрос (параметры).
+* `URL_FRAGMENT` - фрагмент (якорь).
+
+Результат: URL строка согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986), т.е. в формате
+`<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
+
+Пример использования:
+
+```sql
+SELECT
+  HTTP_UTILS.BUILD_URL(
+    'https',
+    NULL,
+    NULL, 
+    'localhost',
+    8080,
+    '/',
+    'query=database',
+    'DB'
+  ) AS URL
+FROM RDB$DATABASE;
+```
+
+### Функция `HTTP_UTILS.URL_APPEND_QUERY`
+
+Функция `HTTP_UTILS.URL_APPEND_QUERY` предназначена для добавление параметров к URL адресу, при этом ранее
+существующая QUERY часть URL адреса сохраняется.
+
+```sql
+  FUNCTION URL_APPEND_QUERY (
+    URL                  VARCHAR(8191) NOT NULL,
+    URL_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
+  )
+  RETURNS VARCHAR(8191);
+```
+
+Входные параметры:
+
+* `URL` - URL адрес, в формате `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
+* `URL_QUERY` - добавляемые параметры или параметр.
+* `URL_ENCODE` - если `TRUE`, то производиться URL кодирования добавляемого параметра `URL_QUERY`. Часть строки до первого знака `=` не кодируется.
+
+Результат: URL адрес с добавленными параметрами.
+
+### Функция `HTTP_UTILS.APPEND_QUERY`
+
+Функция `HTTP_UTILS.APPEND_QUERY` сборки значений параметров в единую строку.
+Далее эта строка может быть добавлена в URL адрес как параметры или передана в тело запроса, если запрос отправляется методом POST с
+`Content-Type: application/x-www-form-urlencoded`.
+
+```sql
+  FUNCTION APPEND_QUERY (
+    URL_QUERY            VARCHAR(8191),
+    NEW_QUERY            VARCHAR(8191),
+    URL_ENCODE           BOOLEAN NOT NULL DEFAULT FALSE
+  )
+  RETURNS VARCHAR(8191);
+```
+
+Входные параметры:
+
+* `URL_QUERY` - существующие параметры к которым необходимо добавить новые. Если параметр `URL_QUERY` равен `NULL`, то результатом будет строка содержащая только добавляемые параметры.
+* `NEW_QUERY` - добавляемые параметры или параметр.
+* `URL_ENCODE` - если `TRUE`, то производиться URL кодирования добавляемого параметра `NEW_QUERY`. Часть строки до первого знака `=` не кодируется.
+
+Результат: строка с добавленными параметрами.
+
+### Процедура `HTTP_UTILS.PARSE_HEADERS`
+
+Процедура `HTTP_UTILS.PARSE_HEADERS` предназначена для анализа заголовков возвращаемых в HTTP ответе.
+Каждый заголовок процедура возвращает отдельной записью в параметре `HEADER_LINE`. Если заголовок имеет вид `<header name>: <header value>`, то
+наименование заголовка возвращается в параметре `HEADER_NAME`, а значение - `HEADER_VALUE`.
+
+```sql
+  PROCEDURE PARSE_HEADERS (
+    HEADERS              BLOB SUB_TYPE TEXT
+  )
+  RETURNS (
+    HEADER_LINE          VARCHAR(8191),
+    HEADER_NAME          VARCHAR(256),
+    HEADER_VALUE         VARCHAR(8191)
+  );
+```  
+
+Входные параметры:
+
+* `HEADERS` - HTTP заголовки.
+
+Выходные параметры:
+
+* `HEADER_LINE` - HTTP заголовок.
+* `HEADER_NAME` - имя HTTP заголовка.
+* `HEADER_VALUE` - значение HTTP заголовка.
+
+Пример использования:
+
+```sql
+WITH 
+  T AS (
+    SELECT
+      RESPONSE_HEADERS
+    FROM HTTP_UTILS.HTTP_GET (
+      'https://www.cbr-xml-daily.ru/latest.js'
+    )
+  )
+SELECT
+  H.HEADER_LINE,
+  H.HEADER_NAME,
+  H.HEADER_VALUE
+FROM 
+  T
+  LEFT JOIN HTTP_UTILS.PARSE_HEADERS(T.RESPONSE_HEADERS) H ON TRUE;
+```
+
+### Функция `HTTP_UTILS.GET_HEADER_VALUE`
+
+Функция `HTTP_UTILS.GET_HEADER_VALUE` возвращает значение первого найденного заголовка с заданным именем. Если заголовок не найден, то возвращается `NULL`.
+
+```sql
+  FUNCTION GET_HEADER_VALUE (
+    HEADERS              BLOB SUB_TYPE TEXT,
+    HEADER_NAME          VARCHAR(256)
+  )
+  RETURNS VARCHAR(8191);
+```
+
+Входные параметры:
+
+* `HEADERS` - HTTP заголовки.
+* `HEADER_NAME` - имя HTTP заголовка.
+
+Результат: значение первого найденного заголовка с заданным именем или `NULL`, если заголовок не найден.
+
+Пример использования:
+
+```sql
+WITH 
+  T AS (
+    SELECT
+      RESPONSE_HEADERS
+    FROM HTTP_UTILS.HTTP_GET (
+      'https://www.cbr-xml-daily.ru/latest.js'
+    )
+  )
+SELECT
+  HTTP_UTILS.GET_HEADER_VALUE(T.RESPONSE_HEADERS, 'age') AS HEADER_VALUE
+FROM T;
+```
 
 ## Примеры
 
@@ -508,4 +680,4 @@ Authorization: Token b81a595753ff53056469a939c064c96b49177db3
 )
 ```
 
-Токен намеренно изменён на нерабочий. Его необходимо получить при регистрации на сервисе dadata.ru.
+Токен намеренно изменён на нерабочий. Его необходимо получить при регистрации на сервисе [dadata.ru](https://dadata.ru).
