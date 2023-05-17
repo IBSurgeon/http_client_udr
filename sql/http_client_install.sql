@@ -316,7 +316,7 @@ BEGIN
   /**
    * Parse the URL and return parts of it.
    *
-   * <URL> = <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]
+   * <URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]
    *
    *
    * Input parameters:
