@@ -22,6 +22,16 @@
 #include <cstdarg>
 #include <curl/curl.h>
 
+// for old curl versions
+#ifndef CURL_VERSION_BITS
+#define CURL_VERSION_BITS(x,y,z) ((x)<<16|(y)<<8|(z))
+#endif
+
+#ifndef CURL_AT_LEAST_VERSION
+#define CURL_AT_LEAST_VERSION(x,y,z) \
+  (LIBCURL_VERSION_NUM >= CURL_VERSION_BITS(x, y, z))
+#endif
+
 constexpr unsigned int BUFFER_LARGE = 16384;
 constexpr unsigned int MAX_SEGMENT_SIZE = 65535;
 
@@ -254,9 +264,11 @@ std::map<long, std::string> parseCurlOptions(const std::string& options)
             else if (key == "CURLOPT_PROXY") {
                 optionValues[CURLOPT_PROXY] = value;
             }
+#if CURL_AT_LEAST_VERSION(7,52,0)
             else if (key == "CURLOPT_PRE_PROXY") {
                 optionValues[CURLOPT_PRE_PROXY] = value;
             }
+#endif
             else if (key == "CURLOPT_PROXYPORT") {
                 optionValues[CURLOPT_PROXYPORT] = value;
             }
@@ -269,6 +281,7 @@ std::map<long, std::string> parseCurlOptions(const std::string& options)
             else if (key == "CURLOPT_PROXYPASSWORD") {
                 optionValues[CURLOPT_PROXYPASSWORD] = value;
             }
+#if CURL_AT_LEAST_VERSION(7,52,0)
             else if (key == "CURLOPT_PROXY_TLSAUTH_USERNAME") {
                 optionValues[CURLOPT_PROXY_TLSAUTH_USERNAME] = value;
             }
@@ -278,6 +291,8 @@ std::map<long, std::string> parseCurlOptions(const std::string& options)
             else if (key == "CURLOPT_PROXY_TLSAUTH_TYPE") {
                 optionValues[CURLOPT_PROXY_TLSAUTH_TYPE] = value;
             }
+#endif
+#if CURL_AT_LEAST_VERSION(7,21,4)
             else if (key == "CURLOPT_TLSAUTH_USERNAME") {
                 optionValues[CURLOPT_TLSAUTH_USERNAME] = value;
             }
@@ -287,6 +302,7 @@ std::map<long, std::string> parseCurlOptions(const std::string& options)
             else if (key == "CURLOPT_TLSAUTH_TYPE") {
                 optionValues[CURLOPT_TLSAUTH_TYPE] = value;
             }
+#endif
             else if (key == "CURLOPT_SSL_VERIFYHOST") {
                 optionValues[CURLOPT_SSL_VERIFYHOST] = value;
             }
@@ -349,7 +365,9 @@ std::map<long, std::string> parseCurlOptions(const std::string& options)
 
 void setCurlOptions(CURL* curl, const std::map<long, std::string>& options) 
 {
-    for (const auto& [option, value] : options) {
+    for (const auto& kv : options) {
+        auto option = kv.first;
+        auto value = kv.second;
         switch (option) {
         case CURLOPT_PORT:
             curl_easy_setopt(curl, CURLOPT_PORT, std::stol(value));
@@ -363,9 +381,11 @@ void setCurlOptions(CURL* curl, const std::map<long, std::string>& options)
             curl_easy_setopt(curl, CURLOPT_PROXY, value.c_str());
             break;
 
+#if CURL_AT_LEAST_VERSION(7,52,0)
         case CURLOPT_PRE_PROXY:
             curl_easy_setopt(curl, CURLOPT_PRE_PROXY, value.c_str());
             break;
+#endif
 
         case CURLOPT_PROXYPORT:
             curl_easy_setopt(curl, CURLOPT_PROXYPORT, std::stol(value));
@@ -383,6 +403,7 @@ void setCurlOptions(CURL* curl, const std::map<long, std::string>& options)
             curl_easy_setopt(curl, CURLOPT_PROXYPASSWORD, value.c_str());
             break;
 
+#if CURL_AT_LEAST_VERSION(7,52,0)
         case CURLOPT_PROXY_TLSAUTH_USERNAME:
             curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_USERNAME, value.c_str());
             break;
@@ -394,7 +415,9 @@ void setCurlOptions(CURL* curl, const std::map<long, std::string>& options)
         case CURLOPT_PROXY_TLSAUTH_TYPE:
             curl_easy_setopt(curl, CURLOPT_PROXY_TLSAUTH_TYPE, value.c_str());
             break;
+#endif
 
+#if CURL_AT_LEAST_VERSION(7,21,4)
         case CURLOPT_TLSAUTH_USERNAME:
             curl_easy_setopt(curl, CURLOPT_TLSAUTH_USERNAME, value.c_str());
             break;
@@ -406,6 +429,7 @@ void setCurlOptions(CURL* curl, const std::map<long, std::string>& options)
         case CURLOPT_TLSAUTH_TYPE:
             curl_easy_setopt(curl, CURLOPT_TLSAUTH_TYPE, value.c_str());
             break;
+#endif
 
         case CURLOPT_SSL_VERIFYHOST:
             curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, std::stol(value));
@@ -936,6 +960,7 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
 
     FB_UDR_EXECUTE_PROCEDURE
     {
+#if CURL_AT_LEAST_VERSION(7,62,0)
         m_needFetch = !in->urlNull;
         if (!in->urlNull) {
             const std::string sUrl(in->url.str, in->url.length);
@@ -1159,7 +1184,9 @@ FB_UDR_BEGIN_PROCEDURE(parseUrl)
                 throwException(status, errorMessage.c_str());
             }
         }
-
+#else
+        throwException(status, "The function is not supported with the current version of libcurl (minimum version 7.62.0). Recompile the library with the updated version of libcurl.");
+#endif
     }
 
     bool m_needFetch = false;
@@ -1208,6 +1235,7 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
 
     FB_UDR_EXECUTE_FUNCTION
     {
+#if CURL_AT_LEAST_VERSION(7,62,0)
         AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
         CURLUcode rc = CURLUE_OK;
         // scheme
@@ -1302,6 +1330,9 @@ FB_UDR_BEGIN_FUNCTION(buildUrl)
             std::string errorMessage(curl_url_strerror(rc));
             throwException(status, errorMessage.c_str());
         }
+#else
+        throwException(status, "The function is not supported with the current version of libcurl (minimum version 7.62.0). Recompile the library with the updated version of libcurl.");
+#endif
     }
 
 FB_UDR_END_FUNCTION
@@ -1331,6 +1362,7 @@ FB_UDR_BEGIN_FUNCTION(urlAppendQuery)
 
     FB_UDR_EXECUTE_FUNCTION
     {
+#if CURL_AT_LEAST_VERSION(7,62,0)
         AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
         CURLUcode rc = CURLUE_OK;
         // url
@@ -1370,6 +1402,9 @@ FB_UDR_BEGIN_FUNCTION(urlAppendQuery)
             std::string errorMessage(curl_url_strerror(rc));
             throwException(status, errorMessage.c_str());
         }
+#else
+        throwException(status, "The function is not supported with the current version of libcurl (minimum version 7.62.0). Recompile the library with the updated version of libcurl.");
+#endif
     }
 
 FB_UDR_END_FUNCTION
@@ -1399,6 +1434,7 @@ FB_UDR_BEGIN_FUNCTION(appendQuery)
 
     FB_UDR_EXECUTE_FUNCTION
     {
+#if CURL_AT_LEAST_VERSION(7,62,0)
         AutoCurlUrlCleanup<CURLU> hUrl(curl_url());
         CURLUcode rc = CURLUE_OK;
         rc = curl_url_set(hUrl, CURLUPART_URL, "http://localhost", 0);
@@ -1452,6 +1488,9 @@ FB_UDR_BEGIN_FUNCTION(appendQuery)
             std::string errorMessage(curl_url_strerror(rc));
             throwException(status, errorMessage.c_str());
         }
+#else
+        throwException(status, "The function is not supported with the current version of libcurl (minimum version 7.62.0). Recompile the library with the updated version of libcurl.");
+#endif
     }
 
 FB_UDR_END_FUNCTION

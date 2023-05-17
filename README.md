@@ -12,12 +12,12 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 
 Скачать готовые сборки под ОС Windows можно по ссылкам:
 
-* [HttpClientUdr_Win_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_Win_x64.zip)
-* [HttpClientUdr_Win_x86.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_Win_x86.zip)
+* [HttpClientUdr_Win_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/1.0/HttpClientUdr_Win_x64.zip)
+* [HttpClientUdr_Win_x86.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/1.0/HttpClientUdr_Win_x86.zip)
 
 Скачать готовые сборки под ОС Linux можно по ссылкам:
 
-* [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_CentOS7_x64.zip)
+* [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/1.0/HttpClientUdr_CentOS7_x64.zip)
 
 Вся процедуры и функции для работы с библиотекой HTTP Client расположены в PSQL пакете `HTTP_UTILS`.
 
@@ -94,6 +94,118 @@ sudo make install
 `HTTP_UTILS.HTTP_DELETE`, `HTTP_UTILS.HTTP_OPTIONS`, `HTTP_UTILS.HTTP_TRACE` являются производными от `HTTP_UTILS.HTTP_REQUEST`.
 Внутри они вызывают `HTTP_UTILS.HTTP_REQUEST` с заполненным параметром `METHOD`, а также убираются лишние входные и выходные параметры, что
 упрощает обращение к web-ресурсу определённым HTTP методом.
+
+Первые два параметра процедуры `HTTP_UTILS.HTTP_REQUEST` являются обязательными.
+
+Тело запроса `REQUEST_BODY` позволяется не для всех HTTP методов. Если оно, есть то желательно также указывать параметр `REQUEST_TYPE`, который соответствует заголовку `Content-Type`.
+
+В параметре `HEADERS` вы можете передать дополнительные заголовки в виде строки. Каждый заголовок должен быть разделён переводом строки.
+
+В параметре `OPTIONS` вы можете передать дополнительные параметры для библиотеки CURL в виде `CURLOPT_*=<value>`. Каждый новый параметр должен быть отделён переводом строки.
+
+Тело ответа всегда возвращается в двоичном виде, но вы можете преобразовать его в текст с нужной кодировкой с помощью `CAST(RESPONSE_BODY AS BLOB SUB_TYPE TEXT ...)`.
+
+Примеры использования:
+
+```sql
+SELECT
+  R.STATUS_CODE,
+  R.STATUS_TEXT,
+  R.RESPONSE_TYPE,
+  R.RESPONSE_HEADERS,
+  CAST(R.RESPONSE_BODY AS BLOB SUB_TYPE TEXT CHARACTER SET UTF8) AS RESPONSE_BODY
+FROM HTTP_UTILS.HTTP_REQUEST (
+  'GET',
+  'https://www.cbr-xml-daily.ru/latest.js'
+) R;
+
+SELECT
+  HTTP_UTILS.URL_ENCODE('N&N') as ENCODED,
+  HTTP_UTILS.URL_DECODE('N%26N') as DECODED
+FROM RDB$DATABASE;
+
+SELECT
+  R.STATUS_CODE,
+  R.STATUS_TEXT,
+  R.RESPONSE_TYPE,
+  R.RESPONSE_HEADERS,
+  CAST(R.RESPONSE_BODY AS BLOB SUB_TYPE TEXT CHARACTER SET UTF8) AS RESPONSE_BODY
+FROM HTTP_UTILS.HTTP_REQUEST (
+  -- method
+  'POST',
+  -- URL
+  'https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/party',
+  -- query body
+  trim('
+{
+    "query": "810702819220",
+    "type": "INDIVIDUAL"
+}
+  '),
+  -- content-type
+  'application/json',
+  -- headers
+  q'{
+Authorization: Token b81a595753ff53056468a939c034c96b49177db3
+  }'
+) R;
+```
+
+Пример задания параметров CURL:
+
+```sql
+SELECT
+  R.STATUS_CODE,
+  R.STATUS_TEXT,
+  R.RESPONSE_TYPE,
+  R.RESPONSE_HEADERS,
+  CAST(R.RESPONSE_BODY AS BLOB SUB_TYPE TEXT CHARACTER SET UTF8) AS RESPONSE_BODY
+FROM HTTP_UTILS.HTTP_REQUEST (
+  'GET',
+  'https://yandex.ru',
+  NULL, 
+  NULL, 
+  NULL, 
+  q'{
+CURLOPT_FOLLOWLOCATION=0
+CURLOPT_USERAGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 OPR/98.0.0.0
+  }'
+) R;
+```
+
+#### Поддерживаемые CURL опции
+
+* [CURLOPT_DNS_SERVERS](https://curl.haxx.se/libcurl/c/CURLOPT_DNS_SERVERS.html)
+* [CURLOPT_PORT](https://curl.haxx.se/libcurl/c/CURLOPT_PORT.html)
+* [CURLOPT_PROXY](https://curl.haxx.se/libcurl/c/CURLOPT_PROXY.html)
+* [CURLOPT_PRE_PROXY](https://curl.haxx.se/libcurl/c/CURLOPT_PRE_PROXY.html)
+* [CURLOPT_PROXYPORT](https://curl.haxx.se/libcurl/c/CURLOPT_PROXYPORT.html)
+* [CURLOPT_PROXYUSERPWD](https://curl.haxx.se/libcurl/c/CURLOPT_PROXYUSERPWD.html)
+* [CURLOPT_PROXYUSERNAME](https://curl.haxx.se/libcurl/c/CURLOPT_PROXYUSERNAME.html)
+* [CURLOPT_PROXYPASSWORD](https://curl.haxx.se/libcurl/c/CURLOPT_PROXYPASSWORD.html)
+* [CURLOPT_PROXY_TLSAUTH_USERNAME](https://curl.haxx.se/libcurl/c/CURLOPT_PROXY_TLSAUTH_USERNAME.html)
+* [CURLOPT_PROXY_TLSAUTH_PASSWORD](https://curl.haxx.se/libcurl/c/CURLOPT_PROXY_TLSAUTH_PASSWORD.html)
+* [CURLOPT_PROXY_TLSAUTH_TYPE](https://curl.haxx.se/libcurl/c/CURLOPT_PROXY_TLSAUTH_TYPE.html)
+* [CURLOPT_TLSAUTH_USERNAME](https://curl.haxx.se/libcurl/c/CURLOPT_TLSAUTH_USERNAME.html)
+* [CURLOPT_TLSAUTH_PASSWORD](https://curl.haxx.se/libcurl/c/CURLOPT_TLSAUTH_PASSWORD.html)
+* [CURLOPT_TLSAUTH_TYPE](https://curl.haxx.se/libcurl/c/CURLOPT_TLSAUTH_TYPE.html)
+* [CURLOPT_SSL_VERIFYHOST](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html)
+* [CURLOPT_SSL_VERIFYPEER](https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html)
+* [CURLOPT_SSLCERT](https://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html)
+* [CURLOPT_SSLKEY](https://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html)
+* [CURLOPT_SSLCERTTYPE](https://curl.haxx.se/libcurl/c/CURLOPT_SSLCERTTYPE.html)
+* [CURLOPT_CAINFO](https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html)
+* [CURLOPT_TIMEOUT](https://curl.haxx.se/libcurl/c/CURLOPT_TIMEOUT.html)
+* [CURLOPT_TIMEOUT_MS](https://curl.haxx.se/libcurl/c/CURLOPT_TIMEOUT_MS.html)
+* [CURLOPT_TCP_KEEPALIVE](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPALIVE.html)
+* [CURLOPT_TCP_KEEPIDLE](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPIDLE.html)
+* [CURLOPT_TCP_KEEPINTVL](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPINTVL.html)
+* [CURLOPT_CONNECTTIMEOUT](https://curl.haxx.se/libcurl/c/CURLOPT_CONNECTTIMEOUT.html)
+* [CURLOPT_USERAGENT](https://curl.haxx.se/libcurl/c/CURLOPT_USERAGENT.html)
+* [CURLOPT_FOLLOWLOCATION](https://curl.haxx.se/libcurl/c/CURLOPT_FOLLOWLOCATION.html) (значение по умолчанию 1)
+* [CURLOPT_MAXREDIRS](https://curl.haxx.se/libcurl/c/CURLOPT_MAXREDIRS.html) (значение по умолчанию 50)
+
+Список поддерживаемых опций зависит от того с какой версий `libcurl` происходила сборка библиотеки.
 
 ### Процедура `HTTP_UTILS.HTTP_GET`
 
@@ -428,6 +540,8 @@ FROM RDB$DATABASE;
 Процедура `HTTP_UTILS.PARSE_URL` предназначена для разбора URL на составные части,
 согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986).
 
+Требование: минимальная версия libcurl 7.62.0.
+
 ```sql
   PROCEDURE PARSE_URL (
     URL                  VARCHAR(8191)
@@ -477,6 +591,8 @@ FROM HTTP_UTILS.PARSE_URL('https://user:password@server:8080/part/put?a=1&b=2#fr
 ### Функция `HTTP_UTILS.BUILD_URL`
 
 Функция `HTTP_UTILS.BUILD_URL` собирает URL из составных частей, согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986).
+
+Требование: минимальная версия libcurl 7.62.0.
 
 ```sql
   FUNCTION BUILD_URL (
@@ -528,6 +644,8 @@ FROM RDB$DATABASE;
 Функция `HTTP_UTILS.URL_APPEND_QUERY` предназначена для добавление параметров к URL адресу, при этом ранее
 существующая QUERY часть URL адреса сохраняется.
 
+Требование: минимальная версия libcurl 7.62.0.
+
 ```sql
   FUNCTION URL_APPEND_QUERY (
     URL                  VARCHAR(8191) NOT NULL,
@@ -568,6 +686,8 @@ END
 Функция `HTTP_UTILS.APPEND_QUERY` сборки значений параметров в единую строку.
 Далее эта строка может быть добавлена в URL адрес как параметры или передана в тело запроса, если запрос отправляется методом POST с
 `Content-Type: application/x-www-form-urlencoded`.
+
+Требование: минимальная версия libcurl 7.62.0.
 
 ```sql
   FUNCTION APPEND_QUERY (

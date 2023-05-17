@@ -31,9 +31,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 ###############################################################################
-# Require and enable C++ 0x/11/14/17
+# Require and enable C++ 0x/11/14
 ############
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "${PROJECT_NAME} compile: C++${CMAKE_CXX_STANDARD}")
@@ -48,11 +48,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_GNUCXX)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++")
         set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -stdlib=libc++")
-    endif()	
+    endif() 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     string(REGEX REPLACE "[/-]W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     if (NOT (CMAKE_VERSION VERSION_LESS 3.6.0)) # Compiler features for Intel in CMake 3.6+
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qstd=c++17")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qstd=c++14")
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /QaxCORE-AVX2")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:precise")
@@ -62,14 +62,14 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
 elseif(MSVC)
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     if(MSVC_VERSION LESS 1900)
-        message(FATAL_ERROR "${PROJECT_NAME} build: Build requires C++17-compliant compiler")
+        message(FATAL_ERROR "${PROJECT_NAME} build: Build requires C++14-compliant compiler")
     endif()
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-	message(STATUS "${PROJECT_NAME} build: compiler flags - ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+    message(STATUS "${PROJECT_NAME} build: compiler flags - ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
-	message(STATUS "${PROJECT_NAME} build: compiler flags - ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+    message(STATUS "${PROJECT_NAME} build: compiler flags - ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
 ####################################
@@ -95,5 +95,3 @@ target_link_libraries(${PROJECT_NAME}  ${CURL_LIBRARY})
 install(TARGETS ${PROJECT_NAME}  DESTINATION ${FIREBIRD_UDR_DIR})
 install(FILES "sql/http_client_install.sql"
               DESTINATION ${FIREBIRD_UDR_DIR})
-
-

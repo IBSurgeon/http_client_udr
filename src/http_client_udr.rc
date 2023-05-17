@@ -20,7 +20,7 @@ BEGIN
       VALUE "FileDescription", "IBSurgeon HTTP Client UDR\0"
       VALUE "FileVersion", FILE_VER_STRING
       VALUE "InternalName", "http_client_udr.dll\0"
-	  VALUE "OriginalFilename", "http_client_udr.dll\0"
+      VALUE "OriginalFilename", "http_client_udr.dll\0"
       VALUE "LegalCopyright", "Copyright (c) 2001-2023 IBSurgeon\0"
       VALUE "ProductName", "HTTP-CLIENT-UDR\0"
       VALUE "ProductVersion", PRODUCT_VER_STRING

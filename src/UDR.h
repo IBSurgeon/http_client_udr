@@ -9,4 +9,4 @@
 #include "firebird/UdrCppEngine.h"
 
 
-#endif  // UDR_LUCENE_H
+#endif  // UDR_H
