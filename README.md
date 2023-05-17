@@ -7,8 +7,8 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 
 Для установки HTTP Client UDR необходимо:
 
-1. Распаковать zip архив с динамическими библиотеками в каталог `plugins\udr`
-2. Выполнить скрипт `sql\http_client_install.sql` для регистрации процедур и функций в БД.
+1. Распаковать zip архив с динамическими библиотеками в каталог `plugins/udr`
+2. Выполнить скрипт `sql/http_client_install.sql` для регистрации процедур и функций в БД.
 
 Скачать готовые сборки под ОС Windows можно по ссылкам:
 
@@ -127,6 +127,18 @@ sudo make install
 * `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
 * `RESPONSE_BODY` - тело ответа.
 * `RESPONSE_HEADERS` - заголовки ответа.
+
+Пример использования:
+
+```sql
+SELECT
+  R.STATUS_CODE,
+  R.STATUS_TEXT,
+  R.RESPONSE_TYPE,
+  R.RESPONSE_HEADERS,
+  CAST(R.RESPONSE_BODY AS BLOB SUB_TYPE TEXT CHARACTER SET UTF8) AS RESPONSE_BODY
+FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
+```
 
 ### Процедура `HTTP_UTILS.HTTP_HEAD`
 
@@ -533,6 +545,24 @@ FROM RDB$DATABASE;
 
 Результат: URL адрес с добавленными параметрами.
 
+Пример использования:
+
+```sql
+EXECUTE BLOCK
+RETURNS (
+  URL VARCHAR(8191)
+)
+AS
+BEGIN
+  URL = 'https://example.com/?shoes=2';
+  URL = HTTP_UTILS.URL_APPEND_QUERY(URL, 'hat=1');
+  URL = HTTP_UTILS.URL_APPEND_QUERY(URL, 'candy=N&N', TRUE);
+  SUSPEND;
+END
+```
+
+Результатом будет URL `https://example.com/?shoes=2&hat=1&candy=N%26N`.
+
 ### Функция `HTTP_UTILS.APPEND_QUERY`
 
 Функция `HTTP_UTILS.APPEND_QUERY` сборки значений параметров в единую строку.
@@ -555,6 +585,24 @@ FROM RDB$DATABASE;
 * `URL_ENCODE` - если `TRUE`, то производиться URL кодирования добавляемого параметра `NEW_QUERY`. Часть строки до первого знака `=` не кодируется.
 
 Результат: строка с добавленными параметрами.
+
+Пример использования:
+
+```sql
+EXECUTE BLOCK
+RETURNS (
+  QUERY VARCHAR(8191)
+)
+AS
+BEGIN
+  QUERY = HTTP_UTILS.APPEND_QUERY(NULL, 'shoes=2');
+  QUERY = HTTP_UTILS.APPEND_QUERY(QUERY, 'hat=1');
+  QUERY = HTTP_UTILS.APPEND_QUERY(QUERY, 'candy=N&N', TRUE);
+  SUSPEND;
+END
+```
+
+Результатом будет строка `shoes=2&hat=1&candy=N%26N`.
 
 ### Процедура `HTTP_UTILS.PARSE_HEADERS`
 

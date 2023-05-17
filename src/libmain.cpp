@@ -1520,6 +1520,14 @@ FB_UDR_BEGIN_PROCEDURE(parseHeaders)
         std::string line;
         if (std::getline(headers, line, '\n')) {
             trim(line);
+            // Skip empty lines.
+            while (line.empty()) {
+                if (!std::getline(headers, line, '\n')) {
+                    return false;
+                }
+                trim(line);
+            }
+
             out->headerLineNull = FB_FALSE;
             out->headerLine.length = std::min<short>(line.size(), 32765);
             line.copy(out->headerLine.str, out->headerLine.length);

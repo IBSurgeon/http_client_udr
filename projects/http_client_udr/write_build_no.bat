@@ -1,9 +1,9 @@
 @echo off
 
 SET MajorVer=0
-SET MinorVer=9
-SET RevNo=1
-SET BuildNum=5
+SET MinorVer=1
+SET RevNo=0
+SET BuildNum=6
 
 SET PRODUCT_VER_STRING=%MajorVer%.%MinorVer%.%RevNo%.%BuildNum%
 SET FILE_VER_STRING=WIN-%MajorVer%.%MinorVer%.%RevNo%.%BuildNum%
@@ -20,4 +20,3 @@ echo */
 echo #define PRODUCT_VER_STRING "%PRODUCT_VER_STRING%"
 echo #define FILE_VER_STRING "%FILE_VER_STRING%"
 echo #define FILE_VER_NUMBER %FILE_VER_NUMBER%
-
