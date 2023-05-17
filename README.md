@@ -130,7 +130,7 @@ sudo make install
 
 ### Процедура `HTTP_UTILS.HTTP_HEAD`
 
-Процедура `HTTP_UTILS.HTTP_HEAD` предназначена для отправки HTTP запроса методом HEAD. 
+Процедура `HTTP_UTILS.HTTP_HEAD` предназначена для отправки HTTP запроса методом HEAD.
 
 ```sql
   PROCEDURE HTTP_HEAD (
@@ -161,7 +161,7 @@ sudo make install
 
 ### Процедура `HTTP_UTILS.HTTP_POST`
 
-Процедура `HTTP_UTILS.HTTP_POST` предназначена для отправки HTTP запроса методом POST. 
+Процедура `HTTP_UTILS.HTTP_POST` предназначена для отправки HTTP запроса методом POST.
 
 ```sql
   PROCEDURE HTTP_POST (
@@ -309,7 +309,7 @@ sudo make install
 
 ### Процедура `HTTP_UTILS.HTTP_OPTIONS`
 
-Процедура `HTTP_UTILS.HTTP_OPTIONS` предназначена для отправки HTTP запроса методом OPTIONS. 
+Процедура `HTTP_UTILS.HTTP_OPTIONS` предназначена для отправки HTTP запроса методом OPTIONS.
 
 ```sql
   PROCEDURE HTTP_OPTIONS (
