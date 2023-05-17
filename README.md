@@ -11,12 +11,13 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 2. Выполнить скрипт `sql\http_client_install.sql` для регистрации процедур и функций в БД. 
 
 Скачать готовые сборки под ОС Windows можно по ссылкам:
+
 * [HttpClientUdr_Win_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_Win_x64.zip)
 * [HttpClientUdr_Win_x86.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_Win_x86.zip)
 
 Скачать готовые сборки под ОС Linux можно по ссылкам:
-* [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_CentOS7_x64.zip)
 
+* [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/0.9_Beta/HttpClientUdr_CentOS7_x64.zip)
 
 Вся процедуры и функции для работы с библиотекой HTTP Client инкапсулированы в PSQL пакете `HTTP_UTILS`.
 
@@ -24,27 +25,28 @@ HTTP Client UDR разработана на основе [libcurl](https://curl.
 
 Перед сборкой необходимо установить
 
-В ubuntu
-```
+В Ubuntu
+
+```bash
 sudo apt-get install libcurl4-openssl-dev
 ```
 
 В CentOS
-```
+
+```bash
 sudo yum install libcurl-devel
 ```
 
 Теперь можно производить саму сборку.
 
+```bash
+git clone https://github.com/IBSurgeon/http_client_udr.git
+cd http_client_udr
+mkdir build; cd build
+cmake ..
+make
+sudo make install
 ```
-$ git clone https://github.com/IBSurgeon/http_client_udr.git
-$ cd http_client_udr
-$ mkdir build; cd build
-$ cmake ..
-$ make
-$ sudo make install
-```
-
 
 ## Пакет `HTTP_UTILS`
 
@@ -73,21 +75,20 @@ $ sudo make install
 
 Входные параметры:
 
-- `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
-- `URL` - URL адрес. Обязательный параметр.
-- `REQUEST_BODY` - тело HTTP запроса.
-- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
+* `URL` - URL адрес. Обязательный параметр.
+* `REQUEST_BODY` - тело HTTP запроса.
+* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_GET`
 
@@ -110,23 +111,21 @@ $ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_HEAD`
 
 Процедура `HTTP_UTILS.HTTP_HEAD` предназначена для отправки HTTP запроса методом HEAD. 
-
 
 ```sql
   PROCEDURE HTTP_HEAD (
@@ -144,22 +143,20 @@ $ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_POST`
 
 Процедура `HTTP_UTILS.HTTP_POST` предназначена для отправки HTTP запроса методом POST. 
-
 
 ```sql
   PROCEDURE HTTP_POST (
@@ -180,25 +177,23 @@ $ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `REQUEST_BODY` - тело HTTP запроса.
-- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `REQUEST_BODY` - тело HTTP запроса.
+* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_PUT`
 
-Процедура `HTTP_UTILS.HTTP_PUT` предназначена для отправки HTTP запроса методом PUT. 
-
+Процедура `HTTP_UTILS.HTTP_PUT` предназначена для отправки HTTP запроса методом PUT.
 
 ```sql
   PROCEDURE HTTP_PUT (
@@ -219,25 +214,23 @@ $ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `REQUEST_BODY` - тело HTTP запроса.
-- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `REQUEST_BODY` - тело HTTP запроса.
+* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_PATCH`
 
-Процедура `HTTP_UTILS.HTTP_PATCH` предназначена для отправки HTTP запроса методом PATCH. 
-
+Процедура `HTTP_UTILS.HTTP_PATCH` предназначена для отправки HTTP запроса методом PATCH.
 
 ```sql
   PROCEDURE HTTP_PATCH (
@@ -258,25 +251,23 @@ $ sudo make install
 
 Входные параметры:
 
-- `URL` - URL адрес. Обязательный параметр.
-- `REQUEST_BODY` - тело HTTP запроса.
-- `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-- `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-- `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL адрес. Обязательный параметр.
+* `REQUEST_BODY` - тело HTTP запроса.
+* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
+* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
+* `OPTIONS` - опции библиотеки CURL.
 
 Выходные параметры:
 
-- `STATUS_CODE` - код статуса ответа.
-- `STATUS_TEXT` - текст статуса ответа.
-- `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-- `RESPONSE_BODY` - тело ответа.
-- `RESPONSE_HEADERS` - заголовки ответа.
-
+* `STATUS_CODE` - код статуса ответа.
+* `STATUS_TEXT` - текст статуса ответа.
+* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
+* `RESPONSE_BODY` - тело ответа.
+* `RESPONSE_HEADERS` - заголовки ответа.
 
 ### Процедура `HTTP_UTILS.HTTP_DELETE`
 
-Процедура `HTTP_UTILS.HTTP_DELETE` предназначена для отправки HTTP запроса методом DELETE. 
-
+Процедура `HTTP_UTILS.HTTP_DELETE` предназначена для отправки HTTP запроса методом DELETE.
 
 ```sql
   PROCEDURE HTTP_DELETE (
@@ -423,7 +414,8 @@ FROM RDB$DATABASE;
 
 ### Процедура `HTTP_UTILS.PARSE_URL`
 
-Процедура `HTTP_UTILS.PARSE_URL` предназначена для разбора URL на составные части.
+Процедура `HTTP_UTILS.PARSE_URL` предназначена для разбора URL на составные части,
+согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986). 
 
 ```sql
   PROCEDURE PARSE_URL (
@@ -443,19 +435,37 @@ FROM RDB$DATABASE;
 
 Входные параметры:
 
-- `URL` - URL адрес. 
+* `URL` - URL адрес, в формате `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`
 
 Выходные параметры:
 
-- `URL_SCHEME` - схема, определяющая протокол.
-- `URL_USER` - имя пользователя.
-- `URL_PASSWORD` - пароль.
-- `URL_HOST` - хост.
-- `URL_PORT` - номер порта (1-65535) указанный в URL, если порт не указан, то возвращает NULL.
-- `URL_PATH` - URL путь. Часть пути будет равна '/', даже если в URL-адресе не указан путь. URL-путь всегда начинается с косой черты.
-- `URL_QUERY` - запрос (параметры).
-- `URL_FRAGMENT` - фрагмент (якорь).
+* `URL_SCHEME` - схема, определяющая протокол.
+* `URL_USER` - имя пользователя.
+* `URL_PASSWORD` - пароль.
+* `URL_HOST` - хост.
+* `URL_PORT` - номер порта (1-65535) указанный в URL, если порт не указан, то возвращает NULL.
+* `URL_PATH` - URL путь. Часть пути будет равна '/', даже если в URL-адресе не указан путь. URL-путь всегда начинается с косой черты.
+* `URL_QUERY` - запрос (параметры).
+* `URL_FRAGMENT` - фрагмент (якорь).
 
+Пример использования:
+
+```sql
+SELECT   
+    URL_SCHEME,
+    URL_USER,
+    URL_PASSWORD,
+    URL_HOST,
+    URL_PORT,
+    URL_PATH,
+    URL_QUERY,
+    URL_FRAGMENT
+FROM HTTP_UTILS.PARSE_URL('https://user:password@server:8080/part/put?a=1&b=2#fragment');
+```
+
+### Функция `HTTP_UTILS.BUILD_URL`
+
+Функция `HTTP_UTILS.BUILD_URL` собирает URL из составных частей
 
 ## Примеры
 
@@ -500,5 +510,3 @@ Authorization: Token b81a595753ff53056469a939c064c96b49177db3
 ```
 
 Токен намеренно изменён на нерабочий. Его необходимо получить при регистрации на сервисе dadata.ru.
-
-
