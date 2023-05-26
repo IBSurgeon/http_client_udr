@@ -1,43 +1,43 @@
 # IBSurgeon HTTP Client UDR
 
-Библиотека IBSurgeon HTTP Client UDR предназначена для работы с HTTP сервисами (REST-API и другие).
-HTTP Client UDR разработана на основе [libcurl](https://curl.se/libcurl/).
+The IBSurgeon HTTP Client UDR library is designed to work with HTTP services (REST-API and others).
+The HTTP Client UDR is based on [libcurl](https://curl.se/libcurl/).
 
-## Установка HTTP Client UDR
+## Installing the HTTP Client UDR
 
-Для установки HTTP Client UDR необходимо:
+To install HTTP Client UDR you need:
 
-1. Распаковать zip архив с динамическими библиотеками в каталог `plugins/udr`
-2. Выполнить скрипт `sql/http_client_install.sql` для регистрации процедур и функций в БД.
+1. Unpack zip archive with dynamic libraries to `plugins/udr` directory
+2. Execute the `sql/http_client_install.sql` script to register procedures and functions in the database.
 
-Скачать готовые сборки под ОС Windows можно по ссылкам:
+You can download builds for Windows OS using the links:
 
 * [HttpClientUdr_Win_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/1.0/HttpClientUdr_Win_x64.zip)
 * [HttpClientUdr_Win_x86.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/1.0/HttpClientUdr_Win_x86.zip)
 
-Скачать готовые сборки под ОС Linux можно по ссылкам:
+You can download builds for Linux OS using the links:
 
 * [HttpClientUdr_CentOS7_x64.zip](https://github.com/IBSurgeon/http_client_udr/releases/download/1.0/HttpClientUdr_CentOS7_x64.zip)
 
-Вся процедуры и функции для работы с библиотекой HTTP Client расположены в PSQL пакете `HTTP_UTILS`.
+All procedures and functions for working with the HTTP Client library are located in the PSQL package `HTTP_UTILS`.
 
-## Сборка под Linux
+## Build on Linux
 
-Перед сборкой необходимо установить
+Must be installed before build
 
-В Ubuntu
+On Ubuntu
 
 ```bash
 sudo apt-get install libcurl4-openssl-dev
 ```
 
-В CentOS
+On CentOS
 
 ```bash
 sudo yum install libcurl-devel
 ```
 
-Теперь можно производить саму сборку.
+Now you can do the build itself.
 
 ```bash
 git clone https://github.com/IBSurgeon/http_client_udr.git
@@ -48,11 +48,11 @@ make
 sudo make install
 ```
 
-## Пакет `HTTP_UTILS`
+## Package `HTTP_UTILS`
 
-### Процедура `HTTP_UTILS.HTTP_REQUEST`
+### Procedure `HTTP_UTILS.HTTP_REQUEST`
 
-Процедура `HTTP_UTILS.HTTP_REQUEST` предназначена для отправки HTTP запроса и получения HTTP ответа.
+The `HTTP_UTILS.HTTP_REQUEST` procedure is designed to send an HTTP request and receive an HTTP response.
 
 ```sql
   PROCEDURE HTTP_REQUEST (
@@ -72,40 +72,40 @@ sudo make install
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `METHOD` - HTTP метод. Обязательный параметр. Возможны следующие значения 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
-* `URL` - URL адрес. Обязательный параметр.
-* `REQUEST_BODY` - тело HTTP запроса.
-* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `METHOD` - HTTP method. Required parameter. Possible values are 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
+* `URL` - URL address. Required parameter.
+* `REQUEST_BODY` - HTTP request body.
+* `REQUEST_TYPE` - the content type of the request body. The value of this parameter is passed as the `Content-Type` header.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-Процедура `HTTP_UTILS.HTTP_REQUEST` является основной процедурой с помощью которой происходит общение с web-сервисами.
-Процедуры `HTTP_UTILS.HTTP_GET`, `HTTP_UTILS.HTTP_HEAD`, `HTTP_UTILS.HTTP_POST`, `HTTP_UTILS.HTTP_PUT`, `HTTP_UTILS.HTTP_PATCH`,
-`HTTP_UTILS.HTTP_DELETE`, `HTTP_UTILS.HTTP_OPTIONS`, `HTTP_UTILS.HTTP_TRACE` являются производными от `HTTP_UTILS.HTTP_REQUEST`.
-Внутри они вызывают `HTTP_UTILS.HTTP_REQUEST` с заполненным параметром `METHOD`, а также убираются лишние входные и выходные параметры, что
-упрощает обращение к web-ресурсу определённым HTTP методом.
+The `HTTP_UTILS.HTTP_REQUEST` procedure is the main procedure by which communication with web services takes place.
+Procedures `HTTP_UTILS.HTTP_GET`, `HTTP_UTILS.HTTP_HEAD`, `HTTP_UTILS.HTTP_POST`, `HTTP_UTILS.HTTP_PUT`, `HTTP_UTILS.HTTP_PATCH`,
+`HTTP_UTILS.HTTP_DELETE`, `HTTP_UTILS.HTTP_OPTIONS`, `HTTP_UTILS.HTTP_TRACE` are derived from `HTTP_UTILS.HTTP_REQUEST`.
+Inside, they call `HTTP_UTILS.HTTP_REQUEST` with the `METHOD` parameter filled in, and unnecessary input and output parameters are removed, which
+simplifies access to a web resource by a specific HTTP method.
 
-Первые два параметра процедуры `HTTP_UTILS.HTTP_REQUEST` являются обязательными.
+The first two parameters of the `HTTP_UTILS.HTTP_REQUEST` procedure are mandatory.
 
-Тело запроса `REQUEST_BODY` позволяется не для всех HTTP методов. Если оно, есть то желательно также указывать параметр `REQUEST_TYPE`, который соответствует заголовку `Content-Type`.
+The `REQUEST_BODY` request body is not allowed for all HTTP methods. If it is, then it is desirable to also specify the `REQUEST_TYPE` parameter, which corresponds to the `Content-Type` header.
 
-В параметре `HEADERS` вы можете передать дополнительные заголовки в виде строки. Каждый заголовок должен быть разделён переводом строки.
+In the `HEADERS` parameter, you can pass additional headers as a string. Each heading must be separated by a line break.
 
-В параметре `OPTIONS` вы можете передать дополнительные параметры для библиотеки CURL в виде `CURLOPT_*=<value>`. Каждый новый параметр должен быть отделён переводом строки.
+In the `OPTIONS` parameter, you can pass additional options for the CURL library in the form `CURLOPT_*=<value>`. Each new parameter must be separated by a newline.
 
-Тело ответа всегда возвращается в двоичном виде, но вы можете преобразовать его в текст с нужной кодировкой с помощью `CAST(RESPONSE_BODY AS BLOB SUB_TYPE TEXT ...)`.
+The response body is always returned in binary form, but you can convert it to text with the desired encoding using `CAST(RESPONSE_BODY AS BLOB SUB_TYPE TEXT ...)`.
 
-Примеры использования:
+Examples of using:
 
 ```sql
 SELECT
@@ -119,10 +119,6 @@ FROM HTTP_UTILS.HTTP_REQUEST (
   'https://www.cbr-xml-daily.ru/latest.js'
 ) R;
 
-SELECT
-  HTTP_UTILS.URL_ENCODE('N&N') as ENCODED,
-  HTTP_UTILS.URL_DECODE('N%26N') as DECODED
-FROM RDB$DATABASE;
 
 SELECT
   R.STATUS_CODE,
@@ -151,7 +147,7 @@ Authorization: Token b81a595753ff53056468a939c034c96b49177db3
 ) R;
 ```
 
-Пример задания параметров CURL:
+An example of setting CURL parameters:
 
 ```sql
 SELECT
@@ -173,7 +169,7 @@ CURLOPT_USERAGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (
 ) R;
 ```
 
-#### Поддерживаемые CURL опции
+#### Supported CURL Options
 
 * [CURLOPT_DNS_SERVERS](https://curl.haxx.se/libcurl/c/CURLOPT_DNS_SERVERS.html)
 * [CURLOPT_PORT](https://curl.haxx.se/libcurl/c/CURLOPT_PORT.html)
@@ -202,14 +198,14 @@ CURLOPT_USERAGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (
 * [CURLOPT_TCP_KEEPINTVL](https://curl.haxx.se/libcurl/c/CURLOPT_TCP_KEEPINTVL.html)
 * [CURLOPT_CONNECTTIMEOUT](https://curl.haxx.se/libcurl/c/CURLOPT_CONNECTTIMEOUT.html)
 * [CURLOPT_USERAGENT](https://curl.haxx.se/libcurl/c/CURLOPT_USERAGENT.html)
-* [CURLOPT_FOLLOWLOCATION](https://curl.haxx.se/libcurl/c/CURLOPT_FOLLOWLOCATION.html) (значение по умолчанию 1)
-* [CURLOPT_MAXREDIRS](https://curl.haxx.se/libcurl/c/CURLOPT_MAXREDIRS.html) (значение по умолчанию 50)
+* [CURLOPT_FOLLOWLOCATION](https://curl.haxx.se/libcurl/c/CURLOPT_FOLLOWLOCATION.html) (default value 1)
+* [CURLOPT_MAXREDIRS](https://curl.haxx.se/libcurl/c/CURLOPT_MAXREDIRS.html) (default value 50)
 
-Список поддерживаемых опций зависит от того с какой версий `libcurl` происходила сборка библиотеки.
+The list of supported options depends on which version of `libcurl` the library was built against.
 
-### Процедура `HTTP_UTILS.HTTP_GET`
+### Procedure `HTTP_UTILS.HTTP_GET`
 
-Процедура `HTTP_UTILS.HTTP_GET` предназначена для отправки HTTP запроса методом GET.
+The `HTTP_UTILS.HTTP_GET` procedure is designed to send an HTTP request using the GET method.
 
 ```sql
   PROCEDURE HTTP_GET (
@@ -226,21 +222,21 @@ CURLOPT_USERAGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-Пример использования:
+Usage example:
 
 ```sql
 SELECT
@@ -252,9 +248,9 @@ SELECT
 FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
 ```
 
-### Процедура `HTTP_UTILS.HTTP_HEAD`
+### Procedure `HTTP_UTILS.HTTP_HEAD`
 
-Процедура `HTTP_UTILS.HTTP_HEAD` предназначена для отправки HTTP запроса методом HEAD.
+The `HTTP_UTILS.HTTP_HEAD` procedure is designed to send an HTTP request using the HEAD method.
 
 ```sql
   PROCEDURE HTTP_HEAD (
@@ -270,22 +266,22 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_HEADERS` - response headers.
 
-### Процедура `HTTP_UTILS.HTTP_POST`
+### Procedure `HTTP_UTILS.HTTP_POST`
 
-Процедура `HTTP_UTILS.HTTP_POST` предназначена для отправки HTTP запроса методом POST.
+The `HTTP_UTILS.HTTP_POST` procedure is designed to send an HTTP request using the POST method.
 
 ```sql
   PROCEDURE HTTP_POST (
@@ -304,25 +300,25 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `REQUEST_BODY` - тело HTTP запроса.
-* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `REQUEST_BODY` - HTTP request body.
+* `REQUEST_TYPE` - the content type of the request body. The value of this parameter is passed as the `Content-Type` header.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-### Процедура `HTTP_UTILS.HTTP_PUT`
+### Procedure `HTTP_UTILS.HTTP_PUT`
 
-Процедура `HTTP_UTILS.HTTP_PUT` предназначена для отправки HTTP запроса методом PUT.
+The `HTTP_UTILS.HTTP_PUT` procedure is designed to send an HTTP request using the PUT method.
 
 ```sql
   PROCEDURE HTTP_PUT (
@@ -341,25 +337,25 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `REQUEST_BODY` - тело HTTP запроса.
-* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `REQUEST_BODY` - HTTP request body.
+* `REQUEST_TYPE` - the content type of the request body. The value of this parameter is passed as the `Content-Type` header.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-### Процедура `HTTP_UTILS.HTTP_PATCH`
+### Procedure `HTTP_UTILS.HTTP_PATCH`
 
-Процедура `HTTP_UTILS.HTTP_PATCH` предназначена для отправки HTTP запроса методом PATCH.
+The `HTTP_UTILS.HTTP_PATCH` procedure is designed to send an HTTP request using the PATCH method.
 
 ```sql
   PROCEDURE HTTP_PATCH (
@@ -378,25 +374,25 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `REQUEST_BODY` - тело HTTP запроса.
-* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `REQUEST_BODY` - HTTP request body.
+* `REQUEST_TYPE` - the content type of the request body. The value of this parameter is passed as the `Content-Type` header.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-### Процедура `HTTP_UTILS.HTTP_DELETE`
+### Procedure `HTTP_UTILS.HTTP_DELETE`
 
-Процедура `HTTP_UTILS.HTTP_DELETE` предназначена для отправки HTTP запроса методом DELETE.
+The `HTTP_UTILS.HTTP_DELETE` procedure is designed to send an HTTP request using the DELETE method.
 
 ```sql
   PROCEDURE HTTP_DELETE (
@@ -415,25 +411,25 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `REQUEST_BODY` - тело HTTP запроса.
-* `REQUEST_TYPE` - тип содержимого тела запроса. Значение этого параметра передаётся в качестве заголовка `Content-Type`.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `REQUEST_BODY` - HTTP request body.
+* `REQUEST_TYPE` - the content type of the request body. The value of this parameter is passed as the `Content-Type` header.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-### Процедура `HTTP_UTILS.HTTP_OPTIONS`
+### Procedure `HTTP_UTILS.HTTP_OPTIONS`
 
-Процедура `HTTP_UTILS.HTTP_OPTIONS` предназначена для отправки HTTP запроса методом OPTIONS.
+The `HTTP_UTILS.HTTP_OPTIONS` procedure is designed to send an HTTP request using the OPTIONS method.
 
 ```sql
   PROCEDURE HTTP_OPTIONS (
@@ -450,23 +446,23 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-### Процедура `HTTP_UTILS.HTTP_TRACE`
+### Procedure `HTTP_UTILS.HTTP_TRACE`
 
-Процедура `HTTP_UTILS.HTTP_TRACE` предназначена для отправки HTTP запроса методом TRACE.
+The `HTTP_UTILS.HTTP_TRACE` procedure is designed to send an HTTP request using the TRACE method.
 
 ```sql
   PROCEDURE HTTP_TRACE (
@@ -483,23 +479,23 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес. Обязательный параметр.
-* `HEADERS` - другие заголовки HTTP запроса. Каждый заголовок должен быть на новой строке, то есть заголовки разделяются символом перевода строки.
-* `OPTIONS` - опции библиотеки CURL.
+* `URL` - URL address. Required parameter.
+* `HEADERS` - other HTTP request headers. Each heading must be on a new line, that is, headings are separated by a newline character.
+* `OPTIONS` - CURL library options.
 
-Выходные параметры:
+Output parameters:
 
-* `STATUS_CODE` - код статуса ответа.
-* `STATUS_TEXT` - текст статуса ответа.
-* `RESPONSE_TYPE` - тип содержимого ответа. Содержит значения заголовка `Content-Type`.
-* `RESPONSE_BODY` - тело ответа.
-* `RESPONSE_HEADERS` - заголовки ответа.
+* `STATUS_CODE` - response status code.
+* `STATUS_TEXT` - response status text.
+* `RESPONSE_TYPE` - response content type. Contains the values of the `Content-Type` header.
+* `RESPONSE_BODY` - response body.
+* `RESPONSE_HEADERS` - response headers.
 
-### Функция `HTTP_UTILS.URL_ENCODE`
+### Function `HTTP_UTILS.URL_ENCODE`
 
-Функция `HTTP_UTILS.URL_ENCODE` предназначена для URL кодирования строки.
+The `HTTP_UTILS.URL_ENCODE` function is for URL encoding of a string.
 
 ```sql
   FUNCTION URL_ENCODE (
@@ -508,17 +504,17 @@ FROM HTTP_UTILS.HTTP_GET('https://www.cbr-xml-daily.ru/latest.js') R;
   RETURNS VARCHAR(8191);
 ```
 
-Пример использования:
+Usage example:
 
 ```sql
 SELECT
-  HTTP_UTILS.URL_ENCODE('мама') as encoded
+  HTTP_UTILS.URL_ENCODE('N&N') as encoded
 FROM RDB$DATABASE;
 ```
 
-### Функция `HTTP_UTILS.URL_DECODE`
+### Function `HTTP_UTILS.URL_DECODE`
 
-Функция `HTTP_UTILS.URL_DECODE` предназначена для URL декодирования строки.
+The `HTTP_UTILS.URL_DECODE` function is for URL string decoding.
 
 ```sql
   FUNCTION URL_DECODE (
@@ -527,20 +523,20 @@ FROM RDB$DATABASE;
   RETURNS VARCHAR(8191);
 ```
 
-Пример использования:
+Usage example:
 
 ```sql
 SELECT
-  HTTP_UTILS.URL_DECODE('%D0%BC%D0%B0%D0%BC%D0%B0') as decoded
+  HTTP_UTILS.URL_DECODE('N%26N') as decoded
 FROM RDB$DATABASE;
 ```
 
-### Процедура `HTTP_UTILS.PARSE_URL`
+### Procedure `HTTP_UTILS.PARSE_URL`
 
-Процедура `HTTP_UTILS.PARSE_URL` предназначена для разбора URL на составные части,
-согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986).
+The `HTTP_UTILS.PARSE_URL` procedure is designed to parse a URL into its component parts,
+according to the specification [RFC 3986](https://tools.ietf.org/html/rfc3986).
 
-Требование: минимальная версия libcurl 7.62.0.
+Requirement: minimum version of `libcurl` is 7.62.0.
 
 ```sql
   PROCEDURE PARSE_URL (
@@ -558,22 +554,22 @@ FROM RDB$DATABASE;
   );
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес, в формате `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
+* `URL` - URL address, in the format `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
 
-Выходные параметры:
+Output parameters:
 
-* `URL_SCHEME` - схема, определяющая протокол.
-* `URL_USER` - имя пользователя.
-* `URL_PASSWORD` - пароль.
-* `URL_HOST` - хост.
-* `URL_PORT` - номер порта (1-65535) указанный в URL, если порт не указан, то возвращает NULL.
-* `URL_PATH` - URL путь. Часть пути будет равна '/', даже если в URL-адресе не указан путь. URL-путь всегда начинается с косой черты.
-* `URL_QUERY` - запрос (параметры).
-* `URL_FRAGMENT` - фрагмент (якорь).
+* `URL_SCHEME` is a scheme that defines the protocol.
+* `URL_USER` - username.
+* `URL_PASSWORD` - password.
+* `URL_HOST` - host.
+* `URL_PORT` - port number (1-65535) specified in the URL, if the port is not specified, then returns NULL.
+* `URL_PATH` - URL path. The path part will be '/' even if no path is specified in the URL. The URL path always starts with a forward slash.
+* `URL_QUERY` - query (parameters).
+* `URL_FRAGMENT` - fragment (anchor).
 
-Пример использования:
+Usage example:
 
 ```sql
 SELECT   
@@ -588,11 +584,11 @@ SELECT
 FROM HTTP_UTILS.PARSE_URL('https://user:password@server:8080/part/put?a=1&b=2#fragment');
 ```
 
-### Функция `HTTP_UTILS.BUILD_URL`
+### Function `HTTP_UTILS.BUILD_URL`
 
-Функция `HTTP_UTILS.BUILD_URL` собирает URL из составных частей, согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986).
+The `HTTP_UTILS.BUILD_URL` function builds a URL from its component parts, according to the specification [RFC 3986](https://tools.ietf.org/html/rfc3986).
 
-Требование: минимальная версия libcurl 7.62.0.
+Requirement: The minimum version of `libcurl` is 7.62.0.
 
 ```sql
   FUNCTION BUILD_URL (
@@ -608,21 +604,21 @@ FROM HTTP_UTILS.PARSE_URL('https://user:password@server:8080/part/put?a=1&b=2#fr
   RETURNS VARCHAR(8191);
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL_SCHEME` - схема, определяющая протокол.
-* `URL_USER` - имя пользователя.
-* `URL_PASSWORD` - пароль.
-* `URL_HOST` - хост.
-* `URL_PORT` - номер порта (1-65535) указанный в URL, если порт не указан, то возвращает NULL.
-* `URL_PATH` - URL путь. Часть пути будет равна '/', даже если в URL-адресе не указан путь. URL-путь всегда начинается с косой черты.
-* `URL_QUERY` - запрос (параметры).
-* `URL_FRAGMENT` - фрагмент (якорь).
+* `URL_SCHEME` is a scheme that defines the protocol.
+* `URL_USER` - username.
+* `URL_PASSWORD` - password.
+* `URL_HOST` - host.
+* `URL_PORT` - port number (1-65535) specified in the URL, if the port is not specified, then returns NULL.
+* `URL_PATH` - URL path. The path part will be '/' even if no path is specified in the URL. The URL path always starts with a forward slash.
+* `URL_QUERY` - query (parameters).
+* `URL_FRAGMENT` - fragment (anchor).
 
-Результат: URL строка согласно спецификации [RFC 3986](https://tools.ietf.org/html/rfc3986), т.е. в формате
+Result: URL string according to the specification [RFC 3986](https://tools.ietf.org/html/rfc3986), i.e. in the format
 `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
 
-Пример использования:
+Usage example:
 
 ```sql
 SELECT
@@ -639,12 +635,12 @@ SELECT
 FROM RDB$DATABASE;
 ```
 
-### Функция `HTTP_UTILS.URL_APPEND_QUERY`
+### Function `HTTP_UTILS.URL_APPEND_QUERY`
 
-Функция `HTTP_UTILS.URL_APPEND_QUERY` предназначена для добавление параметров к URL адресу, при этом ранее
-существующая QUERY часть URL адреса сохраняется.
+The `HTTP_UTILS.URL_APPEND_QUERY` function is designed to add parameters to the URL address, while previously
+the existing QUERY part of the URL is preserved.
 
-Требование: минимальная версия libcurl 7.62.0.
+Requirement: The minimum version of `libcurl` is 7.62.0.
 
 ```sql
   FUNCTION URL_APPEND_QUERY (
@@ -655,15 +651,15 @@ FROM RDB$DATABASE;
   RETURNS VARCHAR(8191);
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL` - URL адрес, в формате `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path>[?<query>][#<fragment>]`.
-* `URL_QUERY` - добавляемые параметры или параметр.
-* `URL_ENCODE` - если `TRUE`, то производиться URL кодирования добавляемого параметра `URL_QUERY`. Часть строки до первого знака `=` не кодируется.
+* `URL` - URL address, in the format `<URL> ::= <scheme>:[//[<user>:<password>@]<host>[:<port>]][/]<path> [?<query>][#<fragment>]`.
+* `URL_QUERY` - added parameters or parameter.
+* `URL_ENCODE` - if `TRUE`, then URL encoding of the added parameter `URL_QUERY` is performed. The part of the string before the first `=` is not encoded.
 
-Результат: URL адрес с добавленными параметрами.
+Result: URL with added parameters.
 
-Пример использования:
+Usage example:
 
 ```sql
 EXECUTE BLOCK
@@ -679,15 +675,15 @@ BEGIN
 END
 ```
 
-Результатом будет URL `https://example.com/?shoes=2&hat=1&candy=N%26N`.
+The result will be a URL `https://example.com/?shoes=2&hat=1&candy=N%26N`.
 
-### Функция `HTTP_UTILS.APPEND_QUERY`
+### Function `HTTP_UTILS.APPEND_QUERY`
 
-Функция `HTTP_UTILS.APPEND_QUERY` сборки значений параметров в единую строку.
-Далее эта строка может быть добавлена в URL адрес как параметры или передана в тело запроса, если запрос отправляется методом POST с
+The `HTTP_UTILS.APPEND_QUERY` function collects parameter values into a single string.
+Further, this string can be added to the URL as parameters or passed to the request body if the request is sent using the POST method with
 `Content-Type: application/x-www-form-urlencoded`.
 
-Требование: минимальная версия libcurl 7.62.0.
+Requirement: The minimum version of `libcurl` is 7.62.0.
 
 ```sql
   FUNCTION APPEND_QUERY (
@@ -698,15 +694,15 @@ END
   RETURNS VARCHAR(8191);
 ```
 
-Входные параметры:
+Input parameters:
 
-* `URL_QUERY` - существующие параметры к которым необходимо добавить новые. Если параметр `URL_QUERY` равен `NULL`, то результатом будет строка содержащая только добавляемые параметры.
-* `NEW_QUERY` - добавляемые параметры или параметр.
-* `URL_ENCODE` - если `TRUE`, то производиться URL кодирования добавляемого параметра `NEW_QUERY`. Часть строки до первого знака `=` не кодируется.
+* `URL_QUERY` - existing parameters to which you need to add new ones. If the `URL_QUERY` parameter is `NULL`, then the result will be a string containing only the parameters to be added.
+* `NEW_QUERY` - added parameters or parameter.
+* `URL_ENCODE` - if `TRUE`, then URL encoding of the added parameter `NEW_QUERY` is performed. The part of the string before the first `=` is not encoded.
 
-Результат: строка с добавленными параметрами.
+Result: string with added parameters.
 
-Пример использования:
+Usage example:
 
 ```sql
 EXECUTE BLOCK
@@ -722,13 +718,13 @@ BEGIN
 END
 ```
 
-Результатом будет строка `shoes=2&hat=1&candy=N%26N`.
+The result will be the string `shoes=2&hat=1&candy=N%26N`.
 
-### Процедура `HTTP_UTILS.PARSE_HEADERS`
+### Procedure `HTTP_UTILS.PARSE_HEADERS`
 
-Процедура `HTTP_UTILS.PARSE_HEADERS` предназначена для анализа заголовков возвращаемых в HTTP ответе.
-Каждый заголовок процедура возвращает отдельной записью в параметре `HEADER_LINE`. Если заголовок имеет вид `<header name>: <header value>`, то
-наименование заголовка возвращается в параметре `HEADER_NAME`, а значение - `HEADER_VALUE`.
+The `HTTP_UTILS.PARSE_HEADERS` procedure is designed to parse headers returned in an HTTP response.
+The procedure returns each header as a separate entry in the `HEADER_LINE` parameter. If the header is of the form `<header name>: <header value>`, 
+then the header name is returned in the `HEADER_NAME` parameter, and the value is `HEADER_VALUE`.
 
 ```sql
   PROCEDURE PARSE_HEADERS (
@@ -741,17 +737,17 @@ END
   );
 ```  
 
-Входные параметры:
+Input parameters:
 
-* `HEADERS` - HTTP заголовки.
+* `HEADERS` - HTTP headers.
 
-Выходные параметры:
+Output parameters:
 
-* `HEADER_LINE` - HTTP заголовок.
-* `HEADER_NAME` - имя HTTP заголовка.
-* `HEADER_VALUE` - значение HTTP заголовка.
+* `HEADER_LINE` - HTTP header.
+* `HEADER_NAME` - HTTP header name.
+* `HEADER_VALUE` - HTTP header value.
 
-Пример использования:
+Usage example:
 
 ```sql
 WITH 
@@ -771,9 +767,9 @@ FROM
   LEFT JOIN HTTP_UTILS.PARSE_HEADERS(T.RESPONSE_HEADERS) H ON TRUE;
 ```
 
-### Функция `HTTP_UTILS.GET_HEADER_VALUE`
+### Function `HTTP_UTILS.GET_HEADER_VALUE`
 
-Функция `HTTP_UTILS.GET_HEADER_VALUE` возвращает значение первого найденного заголовка с заданным именем. Если заголовок не найден, то возвращается `NULL`.
+The `HTTP_UTILS.GET_HEADER_VALUE` function returns the value of the first found header with the given name. If the header is not found, then `NULL` is returned.
 
 ```sql
   FUNCTION GET_HEADER_VALUE (
@@ -783,14 +779,14 @@ FROM
   RETURNS VARCHAR(8191);
 ```
 
-Входные параметры:
+Input parameters:
 
-* `HEADERS` - HTTP заголовки.
-* `HEADER_NAME` - имя HTTP заголовка.
+* `HEADERS` - HTTP headers.
+* `HEADER_NAME` - HTTP header name.
 
-Результат: значение первого найденного заголовка с заданным именем или `NULL`, если заголовок не найден.
+Result: The value of the first found header with the given name, or `NULL` if no header was found.
 
-Пример использования:
+Usage example:
 
 ```sql
 WITH 
@@ -806,9 +802,9 @@ SELECT
 FROM T;
 ```
 
-## Примеры
+## Examples
 
-### Получение курсов валют
+### Getting exchange rates
 
 ```sql
 SELECT
@@ -823,7 +819,7 @@ FROM HTTP_UTILS.HTTP_REQUEST (
 );
 ```
 
-### Получение сведений о компании по ИНН
+### Obtaining information about the company by TIN
 
 ```sql
 SELECT
@@ -848,4 +844,4 @@ Authorization: Token b81a595753ff53056469a939c064c96b49177db3
 )
 ```
 
-Токен намеренно изменён на нерабочий. Его необходимо получить при регистрации на сервисе [dadata.ru](https://dadata.ru).
+The token has been intentionally changed to non-working. It must be obtained when registering on the [dadata.ru](https://dadata.ru) service.
