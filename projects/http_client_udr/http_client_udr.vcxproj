@@ -201,6 +201,7 @@
     <ClCompile Include="..\..\src\libmain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\README_RU.md" />
     <None Include="..\..\sql\http_client_examples.sql" />
     <None Include="..\..\sql\http_client_install.sql" />
     <None Include="..\..\README.md" />
