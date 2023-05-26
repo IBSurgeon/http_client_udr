@@ -723,7 +723,7 @@ The result will be the string `shoes=2&hat=1&candy=N%26N`.
 ### Procedure `HTTP_UTILS.PARSE_HEADERS`
 
 The `HTTP_UTILS.PARSE_HEADERS` procedure is designed to parse headers returned in an HTTP response.
-The procedure returns each header as a separate entry in the `HEADER_LINE` parameter. If the header is of the form `<header name>: <header value>`, 
+The procedure returns each header as a separate entry in the `HEADER_LINE` parameter. If the header is of the form `<header name>: <header value>`,
 then the header name is returned in the `HEADER_NAME` parameter, and the value is `HEADER_VALUE`.
 
 ```sql
