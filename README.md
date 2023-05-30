@@ -4,7 +4,7 @@ The IBSurgeon HTTP Client UDR library is designed to work with HTTP services, fo
 To implement the HTTP client, the open source library [libcurl](https://curl.se/libcurl/) is used, which provides interaction with Web services via the HTTP protocol using the 'GET', 'HEAD', 'POST', ' PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
 In addition, additional procedures and functions are provided for parsing HTTP headers, as well as parsing and constructing URLs.
 
-The HTTP Client UDR is 100% free and open source, licensed under [IDPL] (https://www.firebirdsql.org/en/initial-developer-s-public-license-version-1-0/).
+The HTTP Client UDR is 100% free and open source, licensed under [IDPL](https://www.firebirdsql.org/en/initial-developer-s-public-license-version-1-0/).
 
 Versions for Windows and Linux are available: for Windows we have ready-to-use binaries, and for Linux we need to build UDR from source depending on the specific distribution (we have a simple build instruction).
 
