@@ -1,7 +1,15 @@
 # IBSurgeon HTTP Client UDR
 
-Библиотека IBSurgeon HTTP Client UDR предназначена для работы с HTTP сервисами (REST-API и другие).
-HTTP Client UDR разработана на основе [libcurl](https://curl.se/libcurl/).
+Библиотека IBSurgeon HTTP Client UDR предназначена для работы с HTTP сервисами, например через REST-API.
+Для реализации HTTP клиента используется библиотека с открытыми исходными кодами [libcurl](https://curl.se/libcurl/), которая
+обеспечивает взаимодействие c Web-сервисами по протоколу HTTP методами 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE'.
+Кроме того, предоставляются дополнительные процедуры и функции для разбора HTTP заголовков, а также разбора на составные части URL адресов и их построения.
+
+HTTP Client UDR является 100% бесплатной и с открытым исходным кодом, с лицензией [IDPL](https://www.firebirdsql.org/en/initial-developer-s-public-license-version-1-0/).
+
+Доступны версии для Windows и Linux: для Windows у нас есть готовые к использованию двоичные файлы, а для Linux необходимо собрать UDR из исходных кодов в зависимости от конкретного дистрибутива (у нас есть простая инструкция по сборке).
+
+Библиотека разработана за счет гранта IBSurgeon [www.ib-aid.com](https://www.ib-aid.com).
 
 ## Установка HTTP Client UDR
 
